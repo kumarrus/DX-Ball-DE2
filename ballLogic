@@ -13,6 +13,10 @@ reg [6:0] ballY;
 //Vy + => move down
 reg ballVx, ballVy;
 
+/*
+      DO NEGATIVE VALUES NEED ONE MORE BIT?
+*/
+
 //INITIAL SETTINGS
 initial begin
   ballVx = 1;
