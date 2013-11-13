@@ -33,8 +33,14 @@ always @(posedge clock) begin
   if (counter % ballCyclesToUpdate == 0) begin
   
     //update position
-    ballX <= ballX + 
+    ballX <= ballX + ballVx;
+    ballY <= ballY + ballVy;
     //check collision and update new position
+    //make sure only one possible assignment for ballVx and ballVy
+    
+    //Ball hits left edge of screen
+    if (ballX <= 1'b0)
+      ballVx = 
   
   end //end updateBall
 
