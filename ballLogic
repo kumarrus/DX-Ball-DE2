@@ -1,27 +1,31 @@
-//cycles for 50MHz for the ball's position to update (i.e. ballX = ballX + ballVx)
-param ballCyclesToUpdate = 5000000; //at most, 10 px/sec ---------------------------  (50,000,000 cycles/sec) / (10 px/sec) ------------> 1 px per 5,000,000 cycles   
-param ballRadius = 8; -- to big? radius 2 should be fine.. (gives a 4x4 img)
+//cycles for 50MHz for the ball_'s position to update (i.e. ball_X = ball_X + ball_Vx)
+param ball_CyclesToUpdate = 5000000; //at most, 10 px/sec ---------------------------  (50,000,000 cycles/sec) / (10 px/sec) ------------> 1 px per 5,000,000 cycles   
+param paddle_CyclesToMove = 1010101;
+param ball_Radius = 8; // to big? radius 2 should be fine.. (gives a 4x4 img)
 param maxX = 159;
 param maxY = 120;
-param paddleLength = 20;
+param paddle_Length = 20;
 
 
+/* PADDLE INFORMATION */
       
       
-//ball's position (top left corner)
-reg [7:0] ballX;
-reg [6:0] ballY;
-//ball's speed in x and y direction
-//Vx + => move right
-//Vy + => move down
-reg ballLeft, ballRight, ballUp, ballDown; //wrt screen
+/* ball_ INFORMATION */
+      // right => increase x
+      // down => increase y
+reg [7:0] ball_X;
+reg [6:0] ball_Y;
+reg ball_Left, ball_Right; //always inverse of each other
+reg ball_Up, ball_Down; //always inverse of each other
 
 //INITIAL SETTINGS
 initial begin
-  ballVx = 1;
-  ballVy = 1;
-  ballX = 20;
-  ballY = 95;
+  ball_Vx = 1;
+  ball_Vy = 1;
+  ball_X = 20;
+  ball_Y = 95;
+  ball_Right = 1;
+  ball_Down = 1;
 end
 
 //should work something like this ---> done , implemented something like this in my code.. its under module "plotter".... but this takes into account only the edges of the screen..
@@ -30,34 +34,27 @@ end
 reg [25:0] counter;
 always @(posedge clock) begin
 
-  // <------------- UPDATE BALL ---------->
-  if (counter % ballCyclesToUpdate == 0) begin
-    ballX <= ballX - ballLeft + ballRight;
-    ballY <= ballY + ballDown - ballUp;
+  // <------------- UPDATE ball_ ---------->
+  if (counter % ball_CyclesToUpdate == 0) begin
+    ball_X <= ball_X - ball_Left + ball_Right;
+    ball_Y <= ball_Y + ball_Down - ball_Up;
     
-    if (paddleLeft)
-      paddleX <= paddleX - 1;
-    else if (paddleRight)
-      paddleX <= paddleX + 1;
+    // <------------ ball_ COLLISION ---------------> 
+    // <- Does not account when the ball_ hits the corners of the paddle (needs more calculations)
+    // <- Does not account when ball_ hits bottom and the paddle isn't there (game over condition)
     
-    
-    // <------------ COLLISION ---------------> 
-    // <- Does not account when the ball hits the corners of the paddle (needs more calculations)
-    // <- Does not account when ball hits bottom and the paddle isn't there (game over condition)
-    
-    //Ball hits left (x is at px 0) /right edge of screen (x + 2r is at rightmost px)
-    if (ballX == 'd0 || (ballX + 'd2*ballRadius) >= maxX ) begin //SCREEN COLLISION IN X
-      ballLeft <= ~ballLeft;
-      ballRight <= ~ballRight;
-    end else if (ballY == 'd0) begin //SCREEN COLLISION ON TOP OF SCREEN
-      ballUp <= ~ballUp;
-      ballDown <= ~ballDown;
-    end else if ((ballY + 'd2*ballRadius) == maxY) begin //SCREEN COLLISION ON BOTTOM OF SCREEN
-      if (((ballX + ballRadius) > paddleX) && ((ballX + ballRadius) < (paddleX + paddleLength)) begin
-            ballUp <= ~ballUp;
-            ballDown <= ~ballDown;           
+    //ball_ hits left (x is at px 0) /right edge of screen (x + 2r is at rightmost px)
+    if (ball_X == 'd0 || (ball_X + 'd2*ball_Radius) >= maxX ) begin //SCREEN COLLISION IN X
+      ball_Left <= ~ball_Left;
+      ball_Right <= ~ball_Right;
+    end else if (ball_Y == 'd0) begin //SCREEN COLLISION ON TOP OF SCREEN
+      ball_Up <= ~ball_Up;
+      ball_Down <= ~ball_Down;
+    end else if ((ball_Y + 'd2*ball_Radius) == maxY) begin //SCREEN COLLISION ON BOTTOM OF SCREEN
+      if (((ball_X + ball_Radius) > paddleX) && ((ball_X + ball_Radius) < (paddleX + paddleLength)) begin
+            ball_Up <= ~ball_Up;
+            ball_Down <= ~ball_Down;           
       end 
     end
-  end //end update ball
-
+  end //end update ball_
 end //end always posedge clk block
