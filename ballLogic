@@ -13,7 +13,7 @@ param ball_CyclesToUpdate = 5000000; //at most, 10 px/sec ----------------------
 param paddle_CyclesToMove = 1010101;
 param ball_Radius = 8; // to big? radius 2 should be fine.. (gives a 4x4 img)
 param maxX = 159;
-param maxY = 120;
+param maxY = 119;
 param paddle_Length = 20;
 
 param ball_initialX = 20;
@@ -25,6 +25,7 @@ reg gameOver;
 
 /* PADDLE INFORMATION */
 reg [7:0] paddle_X;
+reg [6:0] paddle_Y;
 
       
 /* ball_ INFORMATION */
@@ -35,12 +36,14 @@ reg [6:0] ball_Y;
 reg ball_Left, ball_Right; //always inverse of each other
 reg ball_Up, ball_Down; //always inverse of each other
 
-//INITIAL SETTINGS
+//INITIAL SETTINGS (Or when reset)
 initial begin
   ball_X = ball_initialX;
   ball_Y = ball_initialY;
   ball_Right = 1;
   ball_Down = 1;
+  paddle_Y = 'd0;
+  paddle_X = 'd59 - paddle_Length;
 end
 
 //should work something like this ---> done , implemented something like this in my code.. its under module "plotter".... but this takes into account only the edges of the screen..
