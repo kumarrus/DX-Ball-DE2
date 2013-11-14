@@ -59,14 +59,8 @@ module gameLogic
 		assign oldY = 7'b0000010;
 		assign sizeX = paddleLength;
 		assign sizeY = 1'b1;
-	end else begin
-		assign newX = paddleX;
-		assign newY = 7'b0000010;
-		assign oldX = oldPaddlEX;
-		assign oldY = 7'b0000010;
-		assign sizeX = paddleLength;
-		assign sizeY = 1'b1;
-	
+	end
+		
 	
 	always@(posedge clk)
 	begin
@@ -84,10 +78,8 @@ module gameLogic
 				if((new_posY) >= (119-4)) begin
 					DOWN <= 1'b0;
 					if ( ((new_posX + ball_Radius) > paddleX) && ((new_posX + ball_Radius) < paddleX) )
-					else if ( ((new_posX + 2 * ball_Radius) > paddleX) && RIGHT)
 						RIGHT <= ~RIGHT;
-					else if ( (new_posX < (paddleX + paddleLength)) && ~RIGHT)
-						RIGHT <= ~RIGHT;
+					else if (
 				end
 				if((new_posY) <= 1) begin
 					DOWN <= 1'b1;
@@ -122,7 +114,7 @@ module gameLogic
 						paddleX <= paddleX + 1'b1;
 					end
 				end
-				startPlot <= 1'b1;
+				startPlot = 1'b1;
 			end
 		else 
 			begin
