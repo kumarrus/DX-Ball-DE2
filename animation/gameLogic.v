@@ -105,7 +105,7 @@ module gameLogic
 					old_posX <= new_posX;
 					new_posX <= new_posX + V_x;
 				end else begin
-					old_PosX <= new_posX;
+					old_posX <= new_posX;
 					new_posX <= new_posX - V_x;
 				if(DOWN) begin
 					old_posY <= new_posY;
