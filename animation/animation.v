@@ -31,32 +31,41 @@ module animation
 	assign resetn = KEY[0];
 	
 	// Create the color, x, y and writeEn wires that are inputs to the controller.
-
-	wire [2:0] color, myImg, blankImg;
+	wire writeEn; // PLOT AND BLANK
+	wire startPlot;// = ~KEY[1]
+	wire [7:0] address; // Address in ROM/RAM
+	wire [2:0] color, 
+				  drawColor, 
+				  eraseColor;
 	wire [7:0] pos_x; // x coordinate , start x
 	wire [6:0] pos_y; // y coordinate , start y
-	wire [7:0] new_posX; // x coordinate
-	wire [6:0] new_posY; // y coordinate
-	wire writeEn; // PLOT AND BLANK
-	wire [7:0] addr; // Address in ROM/RAM
+	wire [7:0] new_posX; // new x coordinate
+	wire [6:0] new_posY; // new y coordinate
+	wire [7:0] old_posX; // old x coordinate
+	wire [6:0] old_posY; // old y coordinate
 	wire [7:0] Q_X, Q_Y; // Pixel coordinate of image
-	wire startPlot;// = ~KEY[1]
 	
-	vga_fsm FSM(
+	fsm_draw_logic FSM(
+			// INPUTS
 			.clk(CLOCK_50),
 			.reset(resetn),
 			.go(startPlot),
+			.eraseColor(eraseColor),
+			.drawColor(drawColor),
+			.old_posX(old_posX),
+			.old_posY(old_posY),
+			.new_posX(new_posX),
+			.new_posY(new_posY),
+			.SIZEOF_X(sizeX),
+			.SIZEOF_Y(sizeY),
+			// OUTPUTS
+			.writeEn(writeEn),
+			.address(address),
+			.color(color),
 			.Q_x(Q_X),
 			.Q_y(Q_Y),
-			.enableX(writeEn),
-			.address(addr),
-			.myImg(myImg),
-			.blankImg(blankImg),
-			.color(color),
 			.pos_x(pos_x),
-			.pos_y(pos_y),
-			.new_posX(new_posX),
-			.new_posY(new_posY));
+			.pos_y(pos_y));
 
 	Plotter animatePlot(
 		.clk(CLOCK_50),
@@ -65,17 +74,17 @@ module animation
 		.startPlot(startPlot));
 	//ROM that holds the image of the ball
 	newRom myRom(
-		.address(addr),
+		.address(address),
 		.clock(CLOCK_50),
-		.q(myImg));
+		.q(drawColor));
 	//ROM that holds the image that needs to be chosen while erasing
 	//This will be the background of the screen
 	newRom2 blankRom(
-		.address(addr),
+		.address(address),
 		.clock(CLOCK_50),
-		.q(blankImg));
+		.q(eraseColor));
 	
-	assign LEDR[7:0] = addr;
+	assign LEDR[7:0] = address;
 	assign LEDR[15:8] = Q_Y[7:0];
 
 	// Create an Instance of a VGA controller - there can be only one!
@@ -108,30 +117,39 @@ module animation
 	
 endmodule
 
-module vga_fsm 
-	(
+module fsm_draw_logic 
+	(  // INPUTS
 		clk,
 		reset,
 		go,
-		Q_x,
-		Q_y,
-		enableX,
-		address,
-		myImg,
-		blankImg,
-		color,
+		eraseColor,
+		drawColor,
+		old_posX,
+		old_posY,
 		new_posX,
 		new_posY,
+		SIZEOF_X,
+		SIZEOF_Y,
+		// OUTPUTS
+		writeEn,
+		address,
+		color,
+		Q_x,
+		Q_y,
 		pos_x,
-		pos_y
+		pos_y,
 	);
 //------------Input Ports--------------
 	input clk, reset, go;
-	input [2:0] myImg, blankImg;
+	input [2:0] eraseColor, drawColor;
 	input [7:0] new_posX; // Start x coordinate
 	input [6:0] new_posY; // Start y coordinate
+	input [7:0] old_posX;
+	input [6:0] old_posY;
+	input [8:0] SIZEOF_X;
+	input [7:0] SIZEOF_Y;
 //----------Output Ports--------------
-	output reg enableX;
+	output reg writeEn;
 	output reg [7:0] address;
 	output reg [7:0] Q_x = 8'b0;
 	output reg [6:0] Q_y = 7'b0;
@@ -146,12 +164,7 @@ module vga_fsm
 				 VSYNC = 3'b100;
 
 	reg [2:0] state = IDLE, next_state = IDLE;
-	reg blankX = 1'b0;
-	reg [7:0] old_posX = 8'b00110011;
-	reg [6:0] old_posY = 7'b0011001;
-	//reg [7:0] V_x = 8'b1; // Velocity x
-	//reg [6:0] V_y = 7'b0; // Velocity y
-	//reg [7:0] Q_x, Q_y;
+	reg blankEn = 1'b0;
 //-------------Code Starts Here-------
 //-------------Change state-----------
 	always@(posedge clk or negedge reset)
@@ -162,7 +175,7 @@ module vga_fsm
 		  state <= next_state;
 	end
 //-------------Next State Logic--------
-	always@(state, go, Q_x, Q_y, blankX)
+	always@(state, go, Q_x, Q_y, SIZEOF_X, SIZEOF_Y, blankEn)
 	begin
 		case(state)
 			IDLE: begin
@@ -178,15 +191,15 @@ module vga_fsm
 						next_state = HSYNC;
 					 end
 			HSYNC: begin
-						 if(Q_x < 8'd4)
+						 if(Q_x < SIZEOF_X)
 							next_state = HSYNC;
 						 else
 							next_state = VSYNC;
 					 end
 			VSYNC: begin
-						 if(Q_y > 7'd3)
+						 if(Q_y > (SIZEOF_Y - 1))
 						 begin
-							if(blankX == 1'b1)
+							if(blankEn == 1'b1)
 								next_state = DRAW;
 							else
 								next_state = IDLE;
@@ -210,23 +223,23 @@ module vga_fsm
 		begin
 			case(next_state)
 				IDLE: begin
-							enableX <= 1'b0;
-							blankX <= 1'b0;
+							writeEn <= 1'b0;
+							blankEn <= 1'b0;
 							Q_x <= 8'b0;
 							Q_y <= 7'b0;
 						end
 				DRAW: begin
-							blankX <= 1'b0;
+							blankEn <= 1'b0;
 							Q_x <= 8'b0;
 							Q_y <= 7'b0;
 							pos_x <= new_posX;
 							pos_y <= new_posY;
-							old_posX <= new_posX;
-							old_posY <= new_posY;
+							//old_posX <= new_posX;
+							//old_posY <= new_posY;
 						end
 				ERASE: begin
-							 enableX <= 1'b1;
-							 blankX <= 1'b1;
+							 writeEn <= 1'b1;
+							 blankEn <= 1'b1;
 							 Q_x <= 8'b0;
 							 Q_y <= 7'b0;
 							 pos_x <= old_posX;
@@ -245,11 +258,11 @@ module vga_fsm
 	
 	always@(*)
 	begin
-		address = ((4*Q_y) + Q_x); // ROW MAJOR, TO GET THE ADDRESS IN MEMORY/RAM
-		if(blankX == 1'b1)
-				color = blankImg;
+		address = ((SIZEOF_X*Q_y) + Q_x); // ROW MAJOR, TO GET THE ADDRESS IN MEMORY/RAM
+		if(blankEn == 1'b1)
+				color = eraseColor;
 			else
-				color = myImg;
+				color = drawColor;
 	end
 
 endmodule
