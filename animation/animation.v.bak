@@ -64,7 +64,7 @@ module animation
 		.new_posY(new_posY),
 		.startPlot(startPlot));
 	//ROM that holds the image of the ball
-	newRom myRom(
+	/*newRom myRom(
 		.address(addr),
 		.clock(CLOCK_50),
 		.q(myImg));
@@ -74,7 +74,7 @@ module animation
 		.address(addr),
 		.clock(CLOCK_50),
 		.q(blankImg));
-	
+	*/
 	assign LEDR[7:0] = addr;
 	assign LEDR[15:8] = Q_Y[7:0];
 
