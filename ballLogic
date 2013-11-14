@@ -55,7 +55,7 @@ always @(posedge clock) begin
     ball_Y <= ball_Y + ball_Down - ball_Up;
     
     // <------------ BALL COLLISION ---------------> 
-    // <- Does not account when the ball hits the corners of the paddle (needs more calculations)
+    // <- Corner cases not accurately handled, but it should be unnoticable
     
     if (ball_X == 'd0 || (ball_X + 'd2*ball_Radius) >= maxX) begin //SCREEN COLLISION IN X
       ball_Left <= ~ball_Left;
@@ -63,10 +63,16 @@ always @(posedge clock) begin
     end else if (ball_Y == 'd0) begin //SCREEN COLLISION ON TOP OF SCREEN
       ball_Up <= ~ball_Up;
       ball_Down <= ~ball_Down;
-    end else if ( (ball_Y + 'd2*ball_Radius) == maxY) begin //SCREEN COLLISION ON BOTTOM OF SCREEN
+    end else if ( (ball_Y + 'd2 * ball_Radius) == maxY) begin //SCREEN COLLISION ON BOTTOM OF SCREEN
       if ( ((ball_X + ball_Radius) > paddle_X) && ((ball_X + ball_Radius) < (paddle_X + paddle_Length)) ) begin
             ball_Up <= ~ball_Up;
             ball_Down <= ~ball_Down;           
+      else if ( (ball_Left && ( (ball_X < paddle_X + paddle_Length) && (ball_X > paddle_X) ) ) ||
+            ( ball_Right && (ball_X < paddle_X) && ((ball_X + 2 * ball_Radius) > paddle_X) ) begin
+            ball_Up <= ~ball_Up;
+            ball_Down <= ~ball_Down;
+            ball_Left <= ~ball_Left;
+            ball_Right <= ~ball_Right;
       end else 
             gameOver = 1'b1;
       end
@@ -76,9 +82,9 @@ always @(posedge clock) begin
   // <---------------- UPDATE PADDLE ------------->
   if (counter % paddle_CyclesToUpdate == 0) begin
       if (paddleLeft)
-            paddle_X <= paddle_X - 1;
+            paddle_X <= paddle_X - 1'b1;
       else if (paddleRight)
-            paddle_X <= paddle_X + 1;
+            paddle_X <= paddle_X + 1'b1;
   end //end update paddle
   
 end //end always posedge clk block
