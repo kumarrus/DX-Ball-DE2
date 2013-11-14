@@ -1,6 +1,6 @@
 //cycles for 50MHz for the ball's position to update (i.e. ballX = ballX + ballVx)
-param ballCyclesToUpdate = 5000000; //at most, 10 px/sec
-param ballRadius = 8;
+param ballCyclesToUpdate = 5000000; //at most, 10 px/sec ---------------------------  (50,000,000 cycles/sec) / (10 px/sec) ------------> 1 px per 5,000,000 cycles   
+param ballRadius = 8; -- to big? radius 2 should be fine.. (gives a 4x4 img)
 
 
       
@@ -25,7 +25,8 @@ initial begin
   ballY = 95;
 end
 
-//should work something like this
+//should work something like this ---> done , implemented something like this in my code.. its under module "plotter".... but this takes into account only the edges of the screen..
+// we need to have somthing that takes care of the paddle collision
 
 reg [25:0] counter;
 always @(posedge clock) begin
