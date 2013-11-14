@@ -16,7 +16,7 @@ module animation
 	);
 
 	input			CLOCK_50;				//	50 MHz
-	input	[0:0]	KEY;					//	Button[3:0]
+	input	[3:0]	KEY;					//	Button[3:0]
 	output			VGA_CLK;   				//	VGA Clock
 	output			VGA_HS;					//	VGA H_SYNC
 	output			VGA_VS;					//	VGA V_SYNC
@@ -261,9 +261,18 @@ module Plotter
 		new_posY,
 		startPlot
 	);
+	
+	param ballCyclesToUpdate = 5000000;
+	param paddleCyclesToUpdate = 5000000;
+	param ball_Radius = 2;
+	param maxX = 159;
+	param maxY = 119;
+	param paddleLength = 20;
+	
 //------------Input Ports--------------
 	input clk;
 //----------Output Ports--------------
+	
 	output reg [7:0] new_posX = 8'b00110011; // Start x coordinate
 	output reg [6:0] new_posY = 7'b0011001; // Start y coordinate
 	output reg startPlot;
