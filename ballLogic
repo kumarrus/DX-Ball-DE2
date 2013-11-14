@@ -1,11 +1,12 @@
 INPUTS
-- paddleLeft
-- paddleRight
+- paddleLeft -> mv paddle to left
+- paddleRight-> "           "right
 
 OUTPUTS
 - ball_X
 - ball_Y
 - paddleX
+- gameOver
 
 //cycles for 50MHz for the ball_'s position to update (i.e. ball_X = ball_X + ball_Vx)
 param ball_CyclesToUpdate = 5000000; //at most, 10 px/sec ---------------------------  (50,000,000 cycles/sec) / (10 px/sec) ------------> 1 px per 5,000,000 cycles   
@@ -15,6 +16,12 @@ param maxX = 159;
 param maxY = 120;
 param paddle_Length = 20;
 
+param ball_initialX = 20;
+param ball_initialY = 95;
+
+
+/* GAME INFORMATION */
+reg gameOver;
 
 /* PADDLE INFORMATION */
 reg [7:0] paddle_X;
@@ -30,10 +37,8 @@ reg ball_Up, ball_Down; //always inverse of each other
 
 //INITIAL SETTINGS
 initial begin
-  ball_Vx = 1;
-  ball_Vy = 1;
-  ball_X = 20;
-  ball_Y = 95;
+  ball_X = ball_initialX;
+  ball_Y = ball_initialY;
   ball_Right = 1;
   ball_Down = 1;
 end
@@ -51,7 +56,6 @@ always @(posedge clock) begin
     
     // <------------ BALL COLLISION ---------------> 
     // <- Does not account when the ball hits the corners of the paddle (needs more calculations)
-    // <- Does not account when ball hits bottom and the paddle isn't there (game over condition)
     
     if (ball_X == 'd0 || (ball_X + 'd2*ball_Radius) >= maxX) begin //SCREEN COLLISION IN X
       ball_Left <= ~ball_Left;
@@ -63,9 +67,11 @@ always @(posedge clock) begin
       if ( ((ball_X + ball_Radius) > paddle_X) && ((ball_X + ball_Radius) < (paddle_X + paddle_Length)) ) begin
             ball_Up <= ~ball_Up;
             ball_Down <= ~ball_Down;           
-      end 
+      end else 
+            gameOver = 1'b1;
+      end
     end
-  end //end update ball_
+  end //end update ball
   
   // <---------------- UPDATE PADDLE ------------->
   if (counter % paddle_CyclesToUpdate == 0) begin
@@ -73,6 +79,6 @@ always @(posedge clock) begin
             paddle_X <= paddle_X - 1;
       else if (paddleRight)
             paddle_X <= paddle_X + 1;
-  end
+  end //end update paddle
   
 end //end always posedge clk block
