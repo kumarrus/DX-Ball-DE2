@@ -1,0 +1,9 @@
+Depth = 20;
+Width = 1;
+Address_radix=dec;
+Data_radix=bin;
+Content
+BEGIN
+	[0..19] : 0;
+	0 : 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1 1;
+End;
