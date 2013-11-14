@@ -55,26 +55,26 @@ module gameLogic
 	always @ (*) begin
 
 		if (object == ballObj) begin
-			assign newX = new_posX;
-			assign newY = new_posY;
-			assign oldX = old_posX;
-			assign oldY = old_posY;
-			assign sizeX = 2 * ball_Radius;
-			assign sizeY = 2 * ball_Radius;
+			 newX = new_posX;
+			 newY = new_posY;
+			 oldX = old_posX;
+			 oldY = old_posY;
+			 sizeX = 2 * ball_Radius;
+			 sizeY = 2 * ball_Radius;
 		end else if (object == paddleObj) begin
-			assign newX = paddleX;
-			assign newY = 7'b0000010;
-			assign oldX = oldPaddleX;
-			assign oldY = 7'b0000010;
-			assign sizeX = paddleLength;
-			assign sizeY = 1'b1;
+			 newX = paddleX;
+			 newY = 7'b0000010;
+			 oldX = oldPaddleX;
+			 oldY = 7'b0000010;
+			 sizeX = paddleLength;
+			 sizeY = 1'b1;
 		end else begin
-			assign newX = 8'b0;
-			assign newY = 7'b0000010;
-			assign oldX = 8'b0;
-			assign oldY = 7'b0000010;
-			assign sizeX = 8'b0;
-			assign sizeY = 7'b0;	
+			 newX = 8'b0;
+			 newY = 7'b0000010;
+			 oldX = 8'b0;
+			 oldY = 7'b0000010;
+			 sizeX = 8'b0;
+			 sizeY = 7'b0;	
 		end
 
 
