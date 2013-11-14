@@ -1,4 +1,3 @@
-
 module gameLogic
 	(
 		clk,
@@ -12,7 +11,7 @@ module gameLogic
 	);
 	
 	param ballCyclesToUpdate = 5000000;
-	param paddleCyclesToUpdate = 5000000;
+	param paddleCyclesToUpdate = 2500000;
 	param ball_Radius = 2;
 	param maxX = 159;
 	param maxY = 119;
