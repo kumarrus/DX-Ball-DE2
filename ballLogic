@@ -1,6 +1,9 @@
 //cycles for 50MHz for the ball's position to update (i.e. ballX = ballX + ballVx)
 param ballCyclesToUpdate = 5000000; //at most, 10 px/sec ---------------------------  (50,000,000 cycles/sec) / (10 px/sec) ------------> 1 px per 5,000,000 cycles   
 param ballRadius = 8; -- to big? radius 2 should be fine.. (gives a 4x4 img)
+param maxX = 159;
+param maxY = 120;
+param paddleLength = 20;
 
 
       
@@ -11,11 +14,7 @@ reg [6:0] ballY;
 //ball's speed in x and y direction
 //Vx + => move right
 //Vy + => move down
-reg ballVx, ballVy;
-
-/*
-      DO NEGATIVE VALUES NEED ONE MORE BIT?
-*/
+reg ballLeft, ballRight, ballUp, ballDown; //wrt screen
 
 //INITIAL SETTINGS
 initial begin
@@ -31,18 +30,34 @@ end
 reg [25:0] counter;
 always @(posedge clock) begin
 
+  // <------------- UPDATE BALL ---------->
   if (counter % ballCyclesToUpdate == 0) begin
-  
-    //update position
-    ballX <= ballX + ballVx;
-    ballY <= ballY + ballVy;
-    //check collision and update new position
-    //make sure only one possible assignment for ballVx and ballVy
+    ballX <= ballX - ballLeft + ballRight;
+    ballY <= ballY + ballDown - ballUp;
     
-    //Ball hits left edge of screen
-    if (ballX <= 1'b0)
-      ballVx = 
-  
-  end //end updateBall
+    if (paddleLeft)
+      paddleX <= paddleX - 1;
+    else if (paddleRight)
+      paddleX <= paddleX + 1;
+    
+    
+    // <------------ COLLISION ---------------> 
+    // <- Does not account when the ball hits the corners of the paddle (needs more calculations)
+    // <- Does not account when ball hits bottom and the paddle isn't there (game over condition)
+    
+    //Ball hits left (x is at px 0) /right edge of screen (x + 2r is at rightmost px)
+    if (ballX == 'd0 || (ballX + 'd2*ballRadius) >= maxX ) begin //SCREEN COLLISION IN X
+      ballLeft <= ~ballLeft;
+      ballRight <= ~ballRight;
+    end else if (ballY == 'd0) begin //SCREEN COLLISION ON TOP OF SCREEN
+      ballUp <= ~ballUp;
+      ballDown <= ~ballDown;
+    end else if ((ballY + 'd2*ballRadius) == maxY) begin //SCREEN COLLISION ON BOTTOM OF SCREEN
+      if (((ballX + ballRadius) > paddleX) && ((ballX + ballRadius) < (paddleX + paddleLength)) begin
+            ballUp <= ~ballUp;
+            ballDown <= ~ballDown;           
+      end 
+    end
+  end //end update ball
 
-end
+end //end always posedge clk block
