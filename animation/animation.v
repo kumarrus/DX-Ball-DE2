@@ -268,13 +268,21 @@ module Plotter
 	param maxX = 159;
 	param maxY = 119;
 	param paddleLength = 20;
+	param ballObj = 0;
+	param paddleObj = 1;
+	param blockObj = 2;
+	param noObj = 3;
 	
 //------------Input Ports--------------
 	input clk;
 //----------Output Ports--------------
 	
-	output reg [7:0] new_posX = 8'b00110011; // Start x coordinate
-	output reg [6:0] new_posY = 7'b0011001; // Start y coordinate
+	output [7:0] newX;
+	output [6:0] newY;
+	output [7:0] oldX;
+	output [6:0] oldY;
+	output [1:0] object;
+	
 	output reg startPlot;
 //------------Internal Variables--------
 	integer count = 0;
@@ -283,10 +291,13 @@ module Plotter
 	reg RIGHT = 1'b1;
 	reg DOWN = 1'b1;
 	
+	reg [7:0] new_posX = 8'b00110011; // Start x coordinate
+	reg [6:0] new_posY = 7'b0011001; // Start y coordinate
+	
 	always@(posedge clk)
 	begin
 		//startPlot <= 1'b1;
-		if(count == 2433333) //approx 1/60th of a second
+		if(count == ballCyclesToUpdate) //approx 1/60th of a second
 			begin
 				count = 0;
 				if((new_posX) >= (159-4))
@@ -307,7 +318,7 @@ module Plotter
 					new_posY <= new_posY - V_y;
 				startPlot <= 1'b1;
 			end
-			else
+		else
 			begin
 				startPlot <= 1'b0;
 				count = count + 1;
