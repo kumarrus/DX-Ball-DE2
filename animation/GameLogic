@@ -1,0 +1,161 @@
+module gameLogic
+	(
+		moveLeft,
+		moveRight,
+		clk,
+		newX,
+		newY,
+		oldX,
+		oldY,
+		sizeX,
+		sizeY,
+		startPlot,
+		object
+	);
+	
+	parameter ballCyclesToUpdate = 2500000;
+	parameter paddleCyclesToUpdate = 5000000;
+	parameter ballRadius = 2;
+	parameter minX = 0;
+	parameter minY = 0;
+	parameter maxX = 159;
+	parameter maxY = 119;
+	parameter paddleLength = 20;
+	parameter ballObj = 2'b00;
+	parameter paddleObj = 2'b01;
+	parameter blockObj = 2'b10;
+	parameter noObj = 2'b11;
+	
+//------------Input Ports--------------
+	input clk;
+	input moveLeft;
+	input moveRight;
+//----------Output Ports--------------
+	
+	output reg [7:0] newX = 'b0;
+	output reg [6:0] newY = 'b0;
+	output reg [7:0] oldX = 'b0;
+	output reg [6:0] oldY = 'b0;
+	output reg [7:0] sizeX = 'b0;
+	output reg [6:0] sizeY = 'b0;
+	output reg [1:0] object = 'b0;
+	
+	output reg startPlot;
+//------------Internal Variables--------
+	integer count = 0;
+	reg [7:0] V_x = 8'b00000001; // Velocity x
+	reg [6:0] V_y = 7'b0000001; // Velocity y
+	reg RIGHT = 1'b0; //ball will move right
+	reg DOWN = 1'b1; //ball will move left
+	//reg [7:0] newPosX = 8'b00110011; // Start x coordinate
+	//reg [6:0] newPosY = 7'b0001000; // Start y coordinate
+	
+	reg [7:0] newPosX = 8'b00010010; // Start x coordinate
+	reg [6:0] newPosY = 7'b1110111; // Start y coordinate
+	reg [7:0] oldPosX; //last x position of ball
+	reg [6:0] oldPosY; //last y position of ball
+	reg [7:0] oldPaddleX; //last position of paddle
+	reg [7:0] paddleX = 8'b00000011; //current position of paddle
+	
+	always@(posedge clk) begin
+	
+		if(count == 'd4) begin
+				object <= ballObj;
+				//count <= 0;
+				count <= count + 1;
+				
+				
+				/* UPDATE BALL POSITION */
+				if(RIGHT) begin
+					oldPosX <= newPosX;
+					newPosX <= newPosX + V_x;
+				end else begin
+					oldPosX <= newPosX;
+					newPosX <= newPosX - V_x;
+				end 
+				
+				if(DOWN) begin
+					oldPosY <= newPosY;
+					newPosY <= newPosY + V_y;
+				end else begin
+					oldPosY <= newPosY;
+					newPosY <= newPosY - V_y;
+				end
+				/* END UPDATE BALL POSITION */
+
+				/* CHECK COLLISIONS */
+				/* due to blocking assignments in update, we check next state */
+				if ((newPosX - 1'b1 + RIGHT) <= minX) //hit left screen
+					RIGHT <= 1;
+				else if ((newPosX +  RIGHT + 'd2 * ballRadius) >= maxX) //hit right screen
+					RIGHT <= 0;
+				else if ((newPosY - 1'b1 + DOWN) <= 0) //hit top screen
+					DOWN <= 1;
+				else if ((newPosY + 2 * ballRadius + DOWN + DOWN) >= 7'b1110011) begin //hit bottom screen
+					if ((newPosX + ballRadius + RIGHT) >= paddleX) begin
+						if ((newPosX + ballRadius + RIGHT) <= (paddleX + paddleLength)) //if centre ball is in paddle
+							DOWN <= 0; //move up
+					end else if (~RIGHT && ((newPosX + ballRadius - 1'b1) < paddleX)) begin //right side of ball hits left side of paddle 
+						if ((newPosX + 2 * ballRadius) > paddleX) begin
+							DOWN <= 0;
+						end
+					end else if (RIGHT && ((newPosX + ballRadius + 1'b1) < paddleX)) begin //right side of ball hits left side of paddle 
+						if ((newPosX + 1'b1 + 2 * ballRadius) > paddleX) begin
+							DOWN <= 0;
+							RIGHT <= 0;
+						end
+					end else if (~RIGHT && ((newPosX - 1'b1) < (paddleX + paddleLength)) ) begin //LS ball <-> RS paddle (mv left)
+						if ((newPosX + ballRadius - 1'b1) > (paddleX + paddleLength)) begin
+							DOWN <= 0;
+							RIGHT <= 1;
+						end
+					//end else if (RIGHT && ( (newPosX + 1'b1) < (paddleX + paddleLength) ) ) begin //LS ball <-> RS paddle (mv right)
+					//	if ((newPosX + ballRadius 1'b1) > (paddleX + paddleLength)) begin
+					//		DOWN <= 0;
+					//	end
+					end
+				end
+
+				/* END CHECK COLLISIONS */
+				newX <= newPosX;
+			 	newY <= newPosY;
+			 	oldX <= oldPosX;
+			 	oldY <= oldPosY;
+				sizeX <= 2 * ballRadius;
+				sizeY <= 2 * ballRadius;				
+				startPlot <= 1'b1;
+				
+		end else if (count == 'd10) begin
+				count = 0;
+				//count <= count + 1;
+				object <= paddleObj;
+				
+				
+				if (moveLeft ^ moveRight) begin
+					if (paddleX <= minX)
+						paddleX <= paddleX + moveRight;
+					else if ((paddleX + paddleLength) >= maxX)
+						paddleX <= paddleX - moveLeft;
+					else
+						paddleX <= paddleX + moveRight - moveLeft;
+					
+					oldPaddleX <= paddleX;
+				end
+				
+				 newX <= paddleX;
+				 newY <= 7'b1110011;
+				 oldX <= oldPaddleX;
+				 oldY <= 7'b1110011;
+				 sizeX <= paddleLength;
+				 sizeY <= 1'b1;
+				startPlot <= 1'b1;
+		end //end updatePaddle
+		else 
+			begin
+				startPlot <= 1'b0;
+				count = count + 1;
+				object = 2'b00;
+			end
+	end
+	
+endmodule
