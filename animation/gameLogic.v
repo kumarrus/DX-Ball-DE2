@@ -13,8 +13,8 @@ module gameLogic
 		object
 	);
 	
-	parameter ballCyclesToUpdate = 5000000;
-	parameter paddleCyclesToUpdate = 10000000;
+	parameter ballCyclesToUpdate = 2500000;
+	parameter paddleCyclesToUpdate = 5000000;
 	parameter ball_Radius = 2;
 	parameter maxX = 159;
 	parameter maxY = 119;
@@ -55,7 +55,7 @@ module gameLogic
 	reg [6:0] paddleY = 7'b1110101; // paddle Y location : 117
 	
 	/* Send proper values to mux */
-	always @ (posedge clk) begin
+	always @ (*) begin
 		
 		if (object == ballObj) begin
 			 newX = newPosX;
@@ -95,7 +95,7 @@ module gameLogic
 				if((newPosX) <= 1) //collide with left wall
 					RIGHT <= 1'b1;
 					
-				if((newPosY) >= (paddleY-(2*ball_Radius))) begin //collide with paddle
+				if((newPosY) >= (paddleY-1-(2*ball_Radius))) begin //collide with paddle
 					if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < (paddleX + paddleLength)) ) 
 					begin //touches paddle
 						DOWN <= 1'b0;
