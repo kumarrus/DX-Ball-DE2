@@ -13,12 +13,13 @@ module gameLogic
 		object
 	);
 	
-	parameter ballCyclesToUpdate = 2500000;
-	parameter paddleCyclesToUpdate = 5000000;
+	parameter ballCyclesToUpdate = 5000000;
+	parameter paddleCyclesToUpdate = 10000000;
 	parameter ball_Radius = 2;
 	parameter maxX = 159;
 	parameter maxY = 119;
 	parameter paddleLength = 20;
+	parameter paddleHeight = 1;
 	parameter ballObj = 2'b00;
 	parameter paddleObj = 2'b01;
 	parameter blockObj = 2'b10;
@@ -51,6 +52,7 @@ module gameLogic
 	reg [6:0] oldPosY;
 	reg [7:0] oldPaddleX;
 	reg [7:0] paddleX = 'd100;
+	reg [6:0] paddleY = 7'b1110101; // paddle Y location : 117
 	
 	/* Send proper values to mux */
 	always @ (posedge clk) begin
@@ -64,11 +66,11 @@ module gameLogic
 			 sizeY = 2 * ball_Radius;
 		end else if (object == paddleObj) begin
 			 newX = paddleX;
-			 newY = 7'b1110011;
+			 newY = paddleY;
 			 oldX = oldPaddleX;
-			 oldY = 7'b1110011;
+			 oldY = paddleY;
 			 sizeX = paddleLength;
-			 sizeY = 1'b1;
+			 sizeY = paddleHeight;
 		end /*else begin
 			 newX = 8'b0;
 			 newY = 7'b1110011;
@@ -93,12 +95,12 @@ module gameLogic
 				if((newPosX) <= 1) //collide with left wall
 					RIGHT <= 1'b1;
 					
-				//if((newPosY) >= (119-4)) begin //collide with bottom
-				if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < (paddleX + paddleLength)) ) 
-				begin //touches paddle
-					DOWN <= 1'b0;
-				end
-				//end //end collide with bottom
+				if((newPosY) >= (paddleY-(2*ball_Radius))) begin //collide with paddle
+					if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < (paddleX + paddleLength)) ) 
+					begin //touches paddle
+						DOWN <= 1'b0;
+					end
+				end //end collide with bottom
 				
 				if((newPosY) <= 1) //collide with top
 					DOWN <= 1'b1;
