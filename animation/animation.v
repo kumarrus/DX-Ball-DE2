@@ -36,7 +36,9 @@ module animation
 	wire [7:0] address; // Address in ROM/RAM
 	wire [2:0] color, 
 				  drawColor, 
-				  eraseColor;
+				  eraseColor,
+				  drawBall,
+				  drawPaddle;
 	wire [7:0] pos_x; // x coordinate , start x
 	wire [6:0] pos_y; // y coordinate , start y
 	wire [7:0] new_posX; // new x coordinate
@@ -44,6 +46,10 @@ module animation
 	wire [7:0] old_posX; // old x coordinate
 	wire [6:0] old_posY; // old y coordinate
 	wire [7:0] Q_X, Q_Y; // Pixel coordinate of image
+	
+	wire [7:0] sizeX;
+	wire [6:0] sizeY;
+	wire objCode;
 	
 	fsm_draw_logic FSM(
 			// INPUTS
@@ -67,22 +73,44 @@ module animation
 			.pos_x(pos_x),
 			.pos_y(pos_y));
 
-	Plotter animatePlot(
+	gameLogic dxBall
+	(
+		.moveLeft(KEY[2]),
+		.moveRight(KEY[3]),
 		.clk(CLOCK_50),
-		.new_posX(new_posX),
-		.new_posY(new_posY),
-		.startPlot(startPlot));
+		.newX(new_posX),
+		.newY(new_posY),
+		.oldX(old_posX),
+		.oldY(old_posY),
+		.sizeX(sizeX),
+		.sizeY(sizeY),
+		.startPlot(startPlot),
+		.object(objCode)
+	);
+	
+	draw_mux AARGHHH(
+		.objCode(objCode),
+		.drawBall(drawBall),
+		.drawPaddle(drawPaddle),
+		.drawColor(drawColor)
+	);
+	
 	//ROM that holds the image of the ball
 	newRom myRom(
 		.address(address),
 		.clock(CLOCK_50),
-		.q(drawColor));
+		.q(drawBall));
 	//ROM that holds the image that needs to be chosen while erasing
 	//This will be the background of the screen
 	newRom2 blankRom(
 		.address(address),
 		.clock(CLOCK_50),
 		.q(eraseColor));
+	
+	newRom3 paddleRom(
+		.address(address),
+		.clock(CLOCK_50),
+		.q(drawPaddle));
 	
 	assign LEDR[7:0] = address;
 	assign LEDR[15:8] = Q_Y[7:0];
@@ -114,6 +142,30 @@ module animation
 	// Put your code here. Your code should produce signals x,y,color and writeEn
 	// for the VGA controller, in addition to any other functionality your design may require.
 	
+	
+endmodule
+
+module draw_mux
+	(
+		objCode,
+		drawBall,
+		drawPaddle,
+		drawColor
+	);
+	
+	input [1:0] objCode;
+	input [2:0] drawBall,drawPaddle;
+	output reg [2:0] drawColor;
+	
+	always@(objCode)
+	begin
+		case(objCode)
+			2'b00: drawColor = drawBall; // BALL
+			2'b01: drawColor = drawPaddle; // PADDLE
+			2'b10: drawColor = drawBall; // BRICK
+			2'b11: drawColor = drawBall; // DRAW NOTHING
+		endcase
+	end
 	
 endmodule
 
@@ -265,77 +317,4 @@ module fsm_draw_logic
 				color = drawColor;
 	end
 
-endmodule
-
-module Plotter
-	(
-		clk,
-		new_posX,
-		new_posY,
-		startPlot
-	);
-	
-	param ballCyclesToUpdate = 5000000;
-	param paddleCyclesToUpdate = 5000000;
-	param ball_Radius = 2;
-	param maxX = 159;
-	param maxY = 119;
-	param paddleLength = 20;
-	param ballObj = 0;
-	param paddleObj = 1;
-	param blockObj = 2;
-	param noObj = 3;
-	
-//------------Input Ports--------------
-	input clk;
-//----------Output Ports--------------
-	
-	output [7:0] newX;
-	output [6:0] newY;
-	output [7:0] oldX;
-	output [6:0] oldY;
-	output [1:0] object;
-	
-	output reg startPlot;
-//------------Internal Variables--------
-	integer count = 0;
-	reg [7:0] V_x = 8'b1; // Velocity x
-	reg [6:0] V_y = 7'b1; // Velocity y
-	reg RIGHT = 1'b1;
-	reg DOWN = 1'b1;
-	
-	reg [7:0] new_posX = 8'b00110011; // Start x coordinate
-	reg [6:0] new_posY = 7'b0011001; // Start y coordinate
-	
-	always@(posedge clk)
-	begin
-		//startPlot <= 1'b1;
-		if(count == ballCyclesToUpdate) //approx 1/60th of a second
-			begin
-				count = 0;
-				if((new_posX) >= (159-4))
-					RIGHT <= 1'b0;
-				if((new_posX) <= 1)
-					RIGHT <= 1'b1;
-				if((new_posY) >= (119-4))
-					DOWN <= 1'b0;
-				if((new_posY) <= 1)
-					DOWN <= 1'b1;
-				if(RIGHT)
-					new_posX <= new_posX + V_x;
-				else
-					new_posX <= new_posX - V_x;
-				if(DOWN)
-					new_posY <= new_posY + V_y;
-				else
-					new_posY <= new_posY - V_y;
-				startPlot <= 1'b1;
-			end
-		else
-			begin
-				startPlot <= 1'b0;
-				count = count + 1;
-			end
-	end
-	
 endmodule

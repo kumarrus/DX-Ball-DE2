@@ -1,7 +1,7 @@
 module gameLogic
 	(
-		paddleLeft,
-		paddleRight,
+		moveLeft,
+		moveRight,
 		clk,
 		newX,
 		newY,
@@ -9,7 +9,8 @@ module gameLogic
 		oldY,
 		sizeX,
 		sizeY,
-		startPlot
+		startPlot,
+		object
 	);
 	
 	parameter ballCyclesToUpdate = 5000000;
@@ -25,8 +26,8 @@ module gameLogic
 	
 //------------Input Ports--------------
 	input clk;
-	input paddleLeft;
-	input paddleRight;
+	input moveLeft;
+	input moveRight;
 //----------Output Ports--------------
 	
 	output reg [7:0] newX;
@@ -76,7 +77,7 @@ module gameLogic
 			 sizeX = 8'b0;
 			 sizeY = 7'b0;	
 		end
-
+	end
 
 	always@(posedge clk)
 	begin
@@ -94,6 +95,7 @@ module gameLogic
 				if((new_posY) >= (119-4)) begin
 					DOWN <= 1'b0;
 					if ( ((new_posX + ball_Radius) > paddleX) && ((new_posX + ball_Radius) < paddleX) )
+						;
 					else if ( ((new_posX + 2 * ball_Radius) > paddleX) && RIGHT)
 						RIGHT <= ~RIGHT;
 					else if ( (new_posX < (paddleX + paddleLength)) && ~RIGHT)
@@ -101,12 +103,13 @@ module gameLogic
 				end
 				if((new_posY) <= 1) begin
 					DOWN <= 1'b1;
-				if(RIGHT) begin
+				end if(RIGHT) begin
 					old_posX <= new_posX;
 					new_posX <= new_posX + V_x;
 				end else begin
 					old_posX <= new_posX;
 					new_posX <= new_posX - V_x;
+				end
 				if(DOWN) begin
 					old_posY <= new_posY;
 					new_posY <= new_posY + V_y;
