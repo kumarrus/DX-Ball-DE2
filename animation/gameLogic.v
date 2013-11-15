@@ -1,7 +1,5 @@
 module gameLogic
 	(
-		moveLeft,
-		moveRight,
 		clk,
 		newX,
 		newY,
@@ -9,33 +7,30 @@ module gameLogic
 		oldY,
 		sizeX,
 		sizeY,
-		startPlot,
-		object
+		startPlot
 	);
 	
-	parameter ballCyclesToUpdate = 5000000;
-	parameter paddleCyclesToUpdate = 2500000;
-	parameter ball_Radius = 2;
-	parameter maxX = 159;
-	parameter maxY = 119;
-	parameter paddleLength = 16;
-	parameter ballObj = 2'b00;
-	parameter paddleObj = 2'b01;
-	parameter blockObj = 2'b10;
-	parameter noObj = 2'b11;
+	param ballCyclesToUpdate = 5000000;
+	param paddleCyclesToUpdate = 2500000;
+	param ball_Radius = 2;
+	param maxX = 159;
+	param maxY = 119;
+	param paddleLength = 16;
+	param ballObj = 2'b00;
+	param paddleObj = 2'b01;
+	param blockObj = 2'b10;
+	param noObj = 2'b11;
 	
 //------------Input Ports--------------
 	input clk;
-	input moveLeft;
-	input moveRight;
 //----------Output Ports--------------
 	
-	output reg [7:0] newX;
-	output reg [6:0] newY;
-	output reg [7:0] oldX;
-	output reg [6:0] oldY;
-	output reg [7:0] sizeX;
-	output reg [6:0] sizeY;
+	output [7:0] newX;
+	output [6:0] newY;
+	output [7:0] oldX;
+	output [6:0] oldY;
+	output [7:0] sizeX;
+	output [6:0] sizeY;
 	output reg [1:0] object;
 	
 	output reg startPlot;
@@ -47,37 +42,36 @@ module gameLogic
 	reg DOWN = 1'b1;
 	reg [7:0] new_posX = 8'b00110011; // Start x coordinate
 	reg [6:0] new_posY = 7'b0000100; // Start y coordinate
-	reg [7:0] old_posX;
-	reg [6:0] old_posY;
 	reg [7:0] oldPaddleX;
 	reg [7:0] paddleX = 'd100;
 	
 
 	always @ (*) begin
 
-		if (object == ballObj) begin
-			 newX = new_posX;
-			 newY = new_posY;
-			 oldX = old_posX;
-			 oldY = old_posY;
-			 sizeX = 2 * ball_Radius;
-			 sizeY = 2 * ball_Radius;
-		end else if (object == paddleObj) begin
-			 newX = paddleX;
-			 newY = 7'b0000010;
-			 oldX = oldPaddleX;
-			 oldY = 7'b0000010;
-			 sizeX = paddleLength;
-			 sizeY = 1'b1;
-		end else begin
-			 newX = 8'b0;
-			 newY = 7'b0000010;
-			 oldX = 8'b0;
-			 oldY = 7'b0000010;
-			 sizeX = 8'b0;
-			 sizeY = 7'b0;	
-		end
+	if (object == ballObj) begin
+		assign newX = new_posX;
+		assign newY = new_posY;
+		assign oldX = old_posX;
+		assign oldY = old_posY;
+		assign sizeX = ball_Radius;
+		assign sizeY = ball_Radius;
+	end else if (object == paddleObj) begin
+		assign newX = paddleX;
+		assign newY = 7'b0000010;
+		assign oldX = oldPaddlEX;
+		assign oldY = 7'b0000010;
+		assign sizeX = paddleLength;
+		assign sizeY = 1'b1;
+	end else begin
+		assign newX = paddleX;
+		assign newY = 7'b0000010;
+		assign oldX = oldPaddleX;
+		assign oldY = 7'b0000010;
+		assign sizeX = paddleLength;
+		assign sizeY = 1'b1;
+	
 	end
+
 
 	always@(posedge clk)
 	begin
@@ -95,7 +89,6 @@ module gameLogic
 				if((new_posY) >= (119-4)) begin
 					DOWN <= 1'b0;
 					if ( ((new_posX + ball_Radius) > paddleX) && ((new_posX + ball_Radius) < paddleX) )
-						;
 					else if ( ((new_posX + 2 * ball_Radius) > paddleX) && RIGHT)
 						RIGHT <= ~RIGHT;
 					else if ( (new_posX < (paddleX + paddleLength)) && ~RIGHT)
@@ -103,13 +96,12 @@ module gameLogic
 				end
 				if((new_posY) <= 1) begin
 					DOWN <= 1'b1;
-				end if(RIGHT) begin
-					old_posX <= new_posX;
+				if(RIGHT) begin
+					old_posX <= new_PosX;
 					new_posX <= new_posX + V_x;
 				end else begin
-					old_posX <= new_posX;
+					old_PosX <= new_PosX;
 					new_posX <= new_posX - V_x;
-				end
 				if(DOWN) begin
 					old_posY <= new_posY;
 					new_posY <= new_posY + V_y;
