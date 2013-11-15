@@ -9,16 +9,16 @@ module gameLogic
 		oldY,
 		sizeX,
 		sizeY,
-		startPlot
+		startPlot,
 		object
 	);
 	
-	parameter ballCyclesToUpdate = 5000000;
-	parameter paddleCyclesToUpdate = 2500000;
+	parameter ballCyclesToUpdate = 2500000;
+	parameter paddleCyclesToUpdate = 5000000;
 	parameter ball_Radius = 2;
 	parameter maxX = 159;
 	parameter maxY = 119;
-	parameter paddleLength = 16;
+	parameter paddleLength = 20;
 	parameter ballObj = 2'b00;
 	parameter paddleObj = 2'b01;
 	parameter blockObj = 2'b10;
@@ -30,13 +30,13 @@ module gameLogic
 	input moveRight;
 //----------Output Ports--------------
 	
-	output reg [7:0] newX;
-	output reg [6:0] newY;
-	output reg [7:0] oldX;
-	output reg [6:0] oldY;
-	output reg [7:0] sizeX;
-	output reg [6:0] sizeY;
-	output reg [1:0] object;
+	output reg [7:0] newX = 'b0;
+	output reg [6:0] newY = 'b0;
+	output reg [7:0] oldX = 'b0;
+	output reg [6:0] oldY = 'b0;
+	output reg [7:0] sizeX = 'b0;
+	output reg [6:0] sizeY = 'b0;
+	output reg [1:0] object = 'b0;
 	
 	output reg startPlot;
 //------------Internal Variables--------
@@ -53,7 +53,7 @@ module gameLogic
 	reg [7:0] paddleX = 'd100;
 	
 	/* Send proper values to mux */
-	always @ (*) begin
+	always @ (posedge clk) begin
 		
 		if (object == ballObj) begin
 			 newX = newPosX;
@@ -64,43 +64,41 @@ module gameLogic
 			 sizeY = 2 * ball_Radius;
 		end else if (object == paddleObj) begin
 			 newX = paddleX;
-			 newY = 7'b1111101;
+			 newY = 7'b1110011;
 			 oldX = oldPaddleX;
-			 oldY = 7'b1111101;
+			 oldY = 7'b1110011;
 			 sizeX = paddleLength;
 			 sizeY = 1'b1;
-		end else begin
+		end /*else begin
 			 newX = 8'b0;
-			 newY = 7'b1111101;
+			 newY = 7'b1110011;
 			 oldX = 8'b0;
-			 oldY = 7'b1111101;
+			 oldY = 7'b1110011;
 			 sizeX = 8'b0;
 			 sizeY = 7'b0;	
-		end
-
+		end */
+	end
 
 		//CLOCK
 	always@(posedge clk) begin
 	
 		//IF WE CAN UPDATE BALL
-		if(count == ballCyclesToUpdate) begin
-				object = 2'b00;
-				count = 0;
-				
+		if(count == ballCyclesToUpdate) 
+		begin
+				object = ballObj;
+				//count = 0;
+				count = count + 1;
 				if((newPosX) >= (159-4)) //collide with right wall
 					RIGHT <= 1'b0;
 				if((newPosX) <= 1) //collide with left wall
 					RIGHT <= 1'b1;
 					
-				if((newPosY) >= (119-4)) begin //collide with bottom
-					if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < paddleX) ) begin //inside paddle
-						DOWN <= 1'b0;
-					end else if ( ((newPosX + 2 * ball_Radius) > paddleX) && RIGHT)) begin //left edge
-						DOWN <= 1'b0;
-					end else if ( (newPosX < (paddleX + paddleLength)) && ~RIGHT) begin //right edge
-						DOWN <= 1'b0;
-					end
-				end //end collide with bottom
+				//if((newPosY) >= (119-4)) begin //collide with bottom
+				if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < (paddleX + paddleLength)) ) 
+				begin //touches paddle
+					DOWN <= 1'b0;
+				end
+				//end //end collide with bottom
 				
 				if((newPosY) <= 1) //collide with top
 					DOWN <= 1'b1;
@@ -111,7 +109,7 @@ module gameLogic
 				end else begin
 					oldPosX <= newPosX;
 					newPosX <= newPosX - V_x;
-				if(DOWN) begin
+				end if(DOWN) begin
 					oldPosY <= newPosY;
 					newPosY <= newPosY + V_y;
 				end else begin
@@ -121,28 +119,35 @@ module gameLogic
 				
 				startPlot <= 1'b1;
 			end
-		/*
+		
 		else if (count == paddleCyclesToUpdate)
 			begin
-				object = 2'b01;
+				count = 0;
+				object = paddleObj;
+				//oldPaddleX <= paddleX;
+				//paddleX <= paddleX - 1'b1;
+				//startPlot <= 1'b1;
+				
 				if (moveLeft) begin
-					if (!(paddleX == 0)) begin
+					if (!(paddleX < 1)) begin
 						oldPaddleX <= paddleX;
-						paddleX <= paddleX - 1'b1;
+						paddleX <= paddleX - V_x;
+						//startPlot <= 1'b1;
 					end
 				end else if (moveRight) begin 
-					if (!(maxY == (paddleX + paddleLength) ) ) begin
+					if ((maxX >= (paddleX + paddleLength) ) ) begin
 						oldPaddleX <= paddleX;
-						paddleX <= paddleX + 1'b1;
+						paddleX <= paddleX + V_x;
+						//startPlot <= 1'b1;
 					end
 				end
 				startPlot <= 1'b1;
+				
 			end
-		*/
 		else 
 			begin
 				startPlot <= 1'b0;
-				object = 2'b00;
+				//object = 2'b00;
 				count = count + 1;
 			end
 	end

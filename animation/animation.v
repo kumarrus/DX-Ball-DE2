@@ -75,8 +75,8 @@ module animation
 
 	gameLogic dxBall
 	(
-		.moveLeft(KEY[2]),
-		.moveRight(KEY[3]),
+		.moveLeft(~KEY[3]),
+		.moveRight(~KEY[2]),
 		.clk(CLOCK_50),
 		.newX(new_posX),
 		.newY(new_posY),
@@ -112,8 +112,8 @@ module animation
 		.clock(CLOCK_50),
 		.q(drawPaddle));
 	
-	assign LEDR[7:0] = address;
-	assign LEDR[15:8] = Q_Y[7:0];
+	assign LEDR[1:0] = objCode;
+	//assign LEDR[15:8] = Q_Y[7:0];
 
 	// Create an Instance of a VGA controller - there can be only one!
 	// Define the number of colours as well as the initial background
@@ -157,12 +157,12 @@ module draw_mux
 	input [2:0] drawBall,drawPaddle;
 	output reg [2:0] drawColor;
 	
-	always@(objCode)
+	always@(*)
 	begin
 		case(objCode)
 			2'b00: drawColor = drawBall; // BALL
 			2'b01: drawColor = drawPaddle; // PADDLE
-			2'b10: drawColor = drawBall; // BRICK
+			2'b10: drawColor = drawPaddle; // BRICK
 			2'b11: drawColor = drawBall; // DRAW NOTHING
 		endcase
 	end
@@ -189,7 +189,7 @@ module fsm_draw_logic
 		Q_x,
 		Q_y,
 		pos_x,
-		pos_y,
+		pos_y
 	);
 //------------Input Ports--------------
 	input clk, reset, go;
