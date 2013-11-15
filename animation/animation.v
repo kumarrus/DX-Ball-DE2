@@ -243,23 +243,23 @@ module fsm_draw_logic
 						next_state = HSYNC;
 					 end
 			HSYNC: begin
-						 if(Q_x < SIZEOF_X)
+						 if(Q_x < (SIZEOF_X))
 							next_state = HSYNC;
 						 else
-							next_state = VSYNC;
+						 begin
+							if(Q_y == (SIZEOF_Y - 1))
+							begin
+								if(blankEn == 1'b1)
+									next_state = DRAW;
+								else
+									next_state = IDLE;
+							 end
+							 else
+								next_state = VSYNC;
+						 end
 					 end
 			VSYNC: begin
-						 if(Q_y > (SIZEOF_Y - 1))
-						 begin
-							if(blankEn == 1'b1)
-								next_state = DRAW;
-							else
-								next_state = IDLE;
-						 end
-						 else
-						 begin
-							next_state = HSYNC;
-						 end
+						next_state = HSYNC;
 					 end
 		endcase
 	end
@@ -286,8 +286,6 @@ module fsm_draw_logic
 							Q_y <= 7'b0;
 							pos_x <= new_posX;
 							pos_y <= new_posY;
-							//old_posX <= new_posX;
-							//old_posY <= new_posY;
 						end
 				ERASE: begin
 							 writeEn <= 1'b1;
