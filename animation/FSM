@@ -1,0 +1,85 @@
+module FSM (clk, start, reset, gameOver, status, initialize, play);
+
+	/* INPUTS */
+	input clk;
+	input start;
+	input reset;
+	input gameOver;
+	
+	/* OUTPUTS */
+	//Initialize == Reset all the objects on the screen -- pause state of game still active
+	//Play == stop pause state of game
+	output [2:0] status;
+	output reg initialize;
+	output reg play;
+	assign status = currState;
+	
+	/*STATE ENCODING */
+	localparam 	STATE_INITIAL = 3'b000, //Initial state == initialize is on
+					STATE_START = 3'b001, //Start = user has pressed start - start playing
+					STATE_GAMEOVER = 3'b010, //game logic has indicated that the game has ended (ball goes below ground)
+					STATE_ERR = 3'b011; //Error state - debugging use
+	
+	/* STATE REG */
+	reg [2:0] currState;
+	reg [2:0] nextState;
+	
+	/* OUTPUTS */
+	always @ (*) begin
+		case (currState)
+			STATE_INITIAL : begin
+				initialize = 1;
+				play = 0;
+			end
+			STATE_START :  begin
+				initialize = 0;
+				play = 1;
+			end
+			STATE_GAMEOVER :  begin
+				initialize = 0;
+				play = 0;
+			end
+			default :  begin //ERR state
+				initialize = 0;
+				play = 0;
+			end
+		endcase
+	end
+	
+	/* STATE TRANSITION */
+	always @ (posedge clk) begin
+		if (reset) 
+			currState <= STATE_INITIAL;
+		else
+			currState <= nextState;
+	end
+	
+	/* CONDITIONAL STATE-TRANSITION */
+	always @ (*) begin
+		nextState = currState;
+		case (currState)	
+			STATE_INITIAL : begin
+				if (start)
+					nextState = STATE_START;
+				else
+					nextState = STATE_INITIAL;
+			end
+			STATE_START : begin
+				if (gameOver)
+					nextState = STATE_GAMEOVER;
+				else
+					nextState = STATE_START;		
+			end
+			STATE_GAMEOVER : begin
+				if (reset)
+					nextState = STATE_INITIAL;
+				else
+					nextState = STATE_GAMEOVER;
+			end
+			default : begin
+				nextState = STATE_ERR;
+			end
+		endcase
+	end
+	
+endmodule
