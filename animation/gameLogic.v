@@ -15,11 +15,15 @@ module gameLogic
 	
 	parameter ballCyclesToUpdate = 2500000;
 	parameter paddleCyclesToUpdate = 5000000;
+	parameter brickCyclesToUpdate = 3000000;
 	parameter ball_Radius = 2;
+	parameter boxesPerRow = 16;
 	parameter maxX = 159;
 	parameter maxY = 119;
 	parameter paddleLength = 20;
 	parameter paddleHeight = 1;
+	parameter boxLength = 16;
+	parameter boxHeight = 10;
 	parameter ballObj = 2'b00;
 	parameter paddleObj = 2'b01;
 	parameter blockObj = 2'b10;
@@ -50,6 +54,10 @@ module gameLogic
 	reg [6:0] newPosY = 7'b0000100; // Start y coordinate
 	reg [7:0] oldPosX;
 	reg [6:0] oldPosY;
+	reg [7:0] newPosXCentre;
+	reg [7:0] newPosXRight;
+	reg [6:0] newPosYCentre;
+	reg [6:0] newPosYBottom;
 	reg [7:0] oldPaddleX;
 	reg [7:0] paddleX = 'd100;
 	reg [6:0] paddleY = 7'b1110101; // paddle Y location : 117
@@ -71,14 +79,16 @@ module gameLogic
 			 oldY = paddleY;
 			 sizeX = paddleLength;
 			 sizeY = paddleHeight;
-		end /*else begin
-			 newX = 8'b0;
-			 newY = 7'b1110011;
-			 oldX = 8'b0;
-			 oldY = 7'b1110011;
-			 sizeX = 8'b0;
-			 sizeY = 7'b0;	
-		end */
+		end else if (object == blockObj) begin		
+			//if box in in second row, then make necessary adjostments to x position (essentially boxLength * (boxToDelete % boxesPerRow)
+			//if box is in second row, then boxToDelete >= boxesPerRow -- adjust y position
+			newX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
+			newY = boxHeight * (boxToDelete >= boxesPerRow);
+			oldX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
+			oldY = boxHeight * (boxToDelete >= boxesPerRow);
+			sizeX = boxLength;
+			sizeY = boxHeight;
+		end
 	end
 
 		//CLOCK
@@ -108,15 +118,23 @@ module gameLogic
 				if(RIGHT) begin
 					oldPosX <= newPosX;
 					newPosX <= newPosX + V_x;
+					newPosXCentre <= newPosX + V_x + ballRadius;
+					newPosXRight <= newPosX + V_x + 2 * ballRadius;					
 				end else begin
 					oldPosX <= newPosX;
 					newPosX <= newPosX - V_x;
+					newPosXCentre <= newPosX - V_x + ballRadius;
+					newPosXRight <= newPosX - V_x + 2 * balRadius;
 				end if(DOWN) begin
 					oldPosY <= newPosY;
 					newPosY <= newPosY + V_y;
+					newPosYCentre <= newPosY + V_y + ballRadius;
+					newPosYBottom <= newPosY + V_y + 2 * ballRadius;
 				end else begin
 					oldPosY <= newPosY;
 					newPosY <= newPosY - V_y;
+					newPosYCentre <= newPosY - V_y + ballRadius;
+					newPosYBottom <= newPosY - V_y + 2 * ballRadius;
 				end
 				
 				startPlot <= 1'b1;
@@ -145,6 +163,12 @@ module gameLogic
 				end
 				startPlot <= 1'b1;
 				
+			end
+		else if (count == brickCyclesToUpdate)
+			begin
+				count = count + 1;
+				object = blockObj;
+				startPlot <= 1'b1;
 			end
 		else 
 			begin
