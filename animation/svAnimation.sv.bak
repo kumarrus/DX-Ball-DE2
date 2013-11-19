@@ -1,5 +1,5 @@
 // Animation
-/*
+
 module animation
 	(
 		CLOCK_50,						//	On Board 50 MHz
@@ -125,7 +125,7 @@ module animation
 			.x(pos_x + Q_X),
 			.y(pos_y + Q_Y),
 			.plot(writeEn),
-			/* Signals for the DAC to drive the monitor. 
+			/* Signals for the DAC to drive the monitor. */
 			.VGA_R(VGA_R),
 			.VGA_G(VGA_G),
 			.VGA_B(VGA_B),
@@ -141,7 +141,7 @@ module animation
 			
 	// Put your code here. Your code should produce signals x,y,color and writeEn
 	// for the VGA controller, in addition to any other functionality your design may require.
-/*	
+
 	wire enable,collision,DOWN,RIGHT;
 	wire [7:0]posX, brickLength, bricks_x[19:0];
 	wire [6:0]posY, brickHeight, bricks_y[19:0];
@@ -161,7 +161,6 @@ brickCollisionLogic bcl
 		DOWN,
 		RIGHT
 	);
-	
 	
 endmodule
 
@@ -341,4 +340,3 @@ module fsm_draw_logic
 	end
 
 endmodule
-*/
