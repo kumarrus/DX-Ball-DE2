@@ -179,3 +179,88 @@ module gameLogic
 	end
 	
 endmodule
+/*
+module brick_collision_logic
+	(
+		// INPUT
+		enable,
+		posX,
+		posY,
+		bricks_x,
+		bricks_y,
+		//OUTPUT
+		collision,
+		DOWN,
+		RIGHT
+	);
+	
+	input enable;
+	input [7:0] posX;
+	input [6:0] posY;
+	input [7:0] bricks_x [19:0];
+	input [6:0] bricks_y [19:0];
+	
+	output reg collision, DOWN, RIGHT;
+
+	reg [7:0] BrickX [19:0];
+	reg [6:0] BrickY [19:0];
+	reg [7:0] tempX;
+	reg [6:0] tempY;
+	integer count = 1'b0;
+	
+	always@(enable) // 
+	begin
+		if(enable == 1'b1) 
+		begin
+			BrickX = bricks_x;
+			BrickY = bricks_y;
+			count = 0;
+			while(count < 20 && collision == 1'b0)
+			begin
+					tempX = BrickX[0];
+					tempY = BrickY[0];
+					BrickX <= {BrickX[0],BrickX[19:1]};
+					BrickY <= {BrickY[0],BrickY[19:1]};
+					count = count + 1;
+					//TOP AND LEFT
+					//BOTTOM AND RIGHT
+					if(posX >= tempX && posX <= (tempX + brickLength)) // Approaching from UP or DOWN
+					begin
+						if(posY == tempY-1) // Approaching from UP
+						begin
+							collision = 1'b1;
+							DOWN = 1'b0;
+						end
+						else if(posY == (tempY + brickHeight + 1)) // Approaching from DOWN
+						begin
+							collision = 1'b1;
+							DOWN = 1'b1;
+						end
+					end
+					else if(posY >= tempY && posY <= (tempY + brickHeight)) // Approaching from LEFT or RIGHT
+					begin
+						if(posX == tempX-1) // Approaching from LEFT
+						begin
+							collision = 1'b1;
+							RIGHT = 1'b0;
+						end
+						else if(posX == (tempX + brickLength + 1)) // Approaching from RIGHT
+						begin
+							collision = 1'b1;
+							RIGHT = 1'b1;
+						end
+					end
+					/*
+					// Approaching from CORNERS 
+					else if( (posX == (tempX - 1) || posX == (tempX + brickLength + 1)) && 
+							(posY == (tempY - 1) || posY == (tempY + brickHeight + 1)) )
+					begin
+					
+					end
+					
+			end
+		end
+	end
+
+endmodule
+*/
