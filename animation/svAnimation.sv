@@ -112,7 +112,7 @@ module animation
 		.clock(CLOCK_50),
 		.q(drawPaddle));
 	
-	assign LEDR[1:0] = objCode;
+	assign LEDR[3:2] = objCode;
 	//assign LEDR[15:8] = Q_Y[7:0];
 
 	// Create an Instance of a VGA controller - there can be only one!
@@ -152,7 +152,7 @@ module animation
 					brickHeight = 7'b0000101; 
 						//bricks_y[1:0] = {7'b0110110, 7'b0101101};
 
-brickCollisionLogic bcl
+/*brickCollisionLogic bcl
 	(
 		// INPUT
 		~KEY[1],
@@ -166,7 +166,7 @@ brickCollisionLogic bcl
 		collision,
 		DOWN,
 		RIGHT
-	);
+	);*/
 	
 endmodule
 
@@ -187,8 +187,8 @@ module draw_mux
 		case(objCode)
 			2'b00: drawColor = drawBall; // BALL
 			2'b01: drawColor = drawPaddle; // PADDLE
-			2'b10: drawColor = drawPaddle; // BRICK
-			2'b11: drawColor = drawBall; // DRAW NOTHING
+			2'b10: drawColor = 3'b100; // BRICK
+			2'b11: drawColor = 3'b100; // DRAW NOTHING
 		endcase
 	end
 	

@@ -13,11 +13,11 @@ module gameLogic
 		object
 	);
 	
-	parameter ballCyclesToUpdate = 2500000;
-	parameter paddleCyclesToUpdate = 5000000;
+	parameter ballCyclesToUpdate = 1500000;
+	parameter paddleCyclesToUpdate = 4500000;
 	parameter brickCyclesToUpdate = 3000000;
 	parameter ball_Radius = 2;
-	parameter boxesPerRow = 16;
+	parameter boxesPerRow = 10;
 	parameter maxX = 159;
 	parameter maxY = 119;
 	parameter paddleLength = 20;
@@ -49,9 +49,9 @@ module gameLogic
 	reg [7:0] V_x = 8'b1; // Velocity x
 	reg [6:0] V_y = 7'b1; // Velocity y
 	reg RIGHT = 1'b1;
-	reg DOWN = 1'b1;
+	reg DOWN = 1'b0;
 	reg [7:0] newPosX = 8'b00110011; // Start x coordinate
-	reg [6:0] newPosY = 7'b0000100; // Start y coordinate
+	reg [6:0] newPosY = 7'b1110101; // Start y coordinate
 	reg [7:0] oldPosX;
 	reg [6:0] oldPosY;
 	reg [7:0] newPosXCentre;
@@ -61,6 +61,12 @@ module gameLogic
 	reg [7:0] oldPaddleX;
 	reg [7:0] paddleX = 'd100;
 	reg [6:0] paddleY = 7'b1110101; // paddle Y location : 117
+	
+	reg [7:0]topLeft_X, topRight_X;
+	reg [6:0]topLeft_Y, bottomLeft_Y;
+	reg [3:0] blockCol, blockRow;
+	reg [14:0] blockAddr;
+	reg collision = 1'b0;
 	
 	/* Send proper values to mux */
 	always @ (*) begin
@@ -82,10 +88,14 @@ module gameLogic
 		end else if (object == blockObj) begin		
 			//if box in in second row, then make necessary adjostments to x position (essentially boxLength * (boxToDelete % boxesPerRow)
 			//if box is in second row, then boxToDelete >= boxesPerRow -- adjust y position
-			newX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
-			newY = boxHeight * (boxToDelete >= boxesPerRow);
-			oldX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
-			oldY = boxHeight * (boxToDelete >= boxesPerRow);
+			//newX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
+			//newY = boxHeight * (boxToDelete >= boxesPerRow);
+			//oldX = boxLength * (boxToDelete - ((boxToDelete >= boxesPerRow) * boxesPerRow));
+			//oldY = boxHeight * (boxToDelete >= boxesPerRow);
+			newX = boxLength * (blockCol);
+			newY = boxHeight * (blockRow);
+			oldX = boxLength * (blockCol);
+			oldY = boxHeight * (blockRow);
 			sizeX = boxLength;
 			sizeY = boxHeight;
 		end
@@ -118,23 +128,23 @@ module gameLogic
 				if(RIGHT) begin
 					oldPosX <= newPosX;
 					newPosX <= newPosX + V_x;
-					newPosXCentre <= newPosX + V_x + ballRadius;
-					newPosXRight <= newPosX + V_x + 2 * ballRadius;					
+					newPosXCentre <= newPosX + V_x + ball_Radius;
+					newPosXRight <= newPosX + V_x + 2 * ball_Radius;					
 				end else begin
 					oldPosX <= newPosX;
 					newPosX <= newPosX - V_x;
-					newPosXCentre <= newPosX - V_x + ballRadius;
-					newPosXRight <= newPosX - V_x + 2 * balRadius;
+					newPosXCentre <= newPosX - V_x + ball_Radius;
+					newPosXRight <= newPosX - V_x + 2 * ball_Radius;
 				end if(DOWN) begin
 					oldPosY <= newPosY;
 					newPosY <= newPosY + V_y;
-					newPosYCentre <= newPosY + V_y + ballRadius;
-					newPosYBottom <= newPosY + V_y + 2 * ballRadius;
+					newPosYCentre <= newPosY + V_y + ball_Radius;
+					newPosYBottom <= newPosY + V_y + 2 * ball_Radius;
 				end else begin
 					oldPosY <= newPosY;
 					newPosY <= newPosY - V_y;
-					newPosYCentre <= newPosY - V_y + ballRadius;
-					newPosYBottom <= newPosY - V_y + 2 * ballRadius;
+					newPosYCentre <= newPosY - V_y + ball_Radius;
+					newPosYBottom <= newPosY - V_y + 2 * ball_Radius;
 				end
 				
 				startPlot <= 1'b1;
@@ -168,7 +178,81 @@ module gameLogic
 			begin
 				count = count + 1;
 				object = blockObj;
-				startPlot <= 1'b1;
+				//Test Logic - stage 2
+				topLeft_X = newPosX;
+				topRight_X = newPosX + (2*ball_Radius) - 1;
+				topLeft_Y = newPosY;
+				bottomLeft_Y = newPosY + (2*ball_Radius) - 1;
+
+				if((newPosY >= 7'd0 && newPosY <= 7'd20)) 
+				begin
+					blockCol = newPosX[7:4];
+					if(newPosY < 7'd10)
+					begin
+						blockRow = 4'd0;
+					end
+					else if(newPosY >= 7'd10 && newPosY < 7'd20)
+					begin
+						blockRow = 4'd1;
+						//blockAddr = (boxesPerRow * blockRow) + blockCol;
+					end
+					else
+						blockRow = 4'd2;
+					//#5
+					//COLLISON WITH LEFT/RIGHT
+					case(RIGHT)
+						1'b1: begin
+									//COMPARE RIGHT BLOCK
+									if(topRight_X == (16*(blockCol+1)-1)  && ~(blockCol == 4'd9)) // It is hitting the left edge of the next block
+									begin
+										//collision = 1'b1;
+										RIGHT = 1'b0;
+										blockCol = blockCol+1;
+										//blockAddr = (boxesPerRow * blockRow) + blockCol;
+										startPlot <= 1'b1;
+									end
+								end
+						1'b0: begin
+									if(topLeft_X == 16*(blockCol) && ~(blockCol == 4'd0)) // It is hitting the right edge of the next block
+									begin
+										//collision = 1'b1;
+										RIGHT = 1'b1;
+										blockCol = blockCol-1;
+										startPlot <= 1'b1;
+									end
+								end
+					endcase
+					//#10
+					//COLLISON WITH UP/DOWN
+					case(DOWN)
+						1'b1: begin
+									 if(bottomLeft_Y == (10*(blockRow+1)-1) && ~(blockRow == 4'd2)) // It is hitting the top edge of the next block
+									 begin
+										 //collision = 1'b1;
+										 DOWN = 1'b0;
+										 blockRow = blockRow+1;
+										 startPlot <= 1'b1;
+									 end
+								 end
+						1'b0: begin
+									 if(topLeft_Y == 10*(blockRow) && ~(blockRow == 4'd0)) // It is hitting the bottom edge of the next block
+									 begin
+										 //collision = 1'b1;
+										 DOWN = 1'b1;
+										 blockRow = blockRow-1;
+										 startPlot <= 1'b1;
+									 end
+								end
+					endcase
+					/*
+					// Approaching from CORNERS 
+					else if( (posX == (tempX - 1) || posX == (tempX + brickLength + 1)) && 
+							(posY == (tempY - 1) || posY == (tempY + brickHeight + 1)) )
+					begin
+					
+					end
+					*/
+				end
 			end
 		else 
 			begin
@@ -179,88 +263,3 @@ module gameLogic
 	end
 	
 endmodule
-/*
-module brick_collision_logic
-	(
-		// INPUT
-		enable,
-		posX,
-		posY,
-		bricks_x,
-		bricks_y,
-		//OUTPUT
-		collision,
-		DOWN,
-		RIGHT
-	);
-	
-	input enable;
-	input [7:0] posX;
-	input [6:0] posY;
-	input [7:0] bricks_x [19:0];
-	input [6:0] bricks_y [19:0];
-	
-	output reg collision, DOWN, RIGHT;
-
-	reg [7:0] BrickX [19:0];
-	reg [6:0] BrickY [19:0];
-	reg [7:0] tempX;
-	reg [6:0] tempY;
-	integer count = 1'b0;
-	
-	always@(enable) // 
-	begin
-		if(enable == 1'b1) 
-		begin
-			BrickX = bricks_x;
-			BrickY = bricks_y;
-			count = 0;
-			while(count < 20 && collision == 1'b0)
-			begin
-					tempX = BrickX[0];
-					tempY = BrickY[0];
-					BrickX <= {BrickX[0],BrickX[19:1]};
-					BrickY <= {BrickY[0],BrickY[19:1]};
-					count = count + 1;
-					//TOP AND LEFT
-					//BOTTOM AND RIGHT
-					if(posX >= tempX && posX <= (tempX + brickLength)) // Approaching from UP or DOWN
-					begin
-						if(posY == tempY-1) // Approaching from UP
-						begin
-							collision = 1'b1;
-							DOWN = 1'b0;
-						end
-						else if(posY == (tempY + brickHeight + 1)) // Approaching from DOWN
-						begin
-							collision = 1'b1;
-							DOWN = 1'b1;
-						end
-					end
-					else if(posY >= tempY && posY <= (tempY + brickHeight)) // Approaching from LEFT or RIGHT
-					begin
-						if(posX == tempX-1) // Approaching from LEFT
-						begin
-							collision = 1'b1;
-							RIGHT = 1'b0;
-						end
-						else if(posX == (tempX + brickLength + 1)) // Approaching from RIGHT
-						begin
-							collision = 1'b1;
-							RIGHT = 1'b1;
-						end
-					end
-					/*
-					// Approaching from CORNERS 
-					else if( (posX == (tempX - 1) || posX == (tempX + brickLength + 1)) && 
-							(posY == (tempY - 1) || posY == (tempY + brickHeight + 1)) )
-					begin
-					
-					end
-					
-			end
-		end
-	end
-
-endmodule
-*/

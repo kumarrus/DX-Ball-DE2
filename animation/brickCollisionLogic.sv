@@ -1,3 +1,4 @@
+/*
 module brickCollisionLogic
 	(
 		// INPUT
@@ -24,13 +25,15 @@ module brickCollisionLogic
 	
 	output reg collision, DOWN, RIGHT;
 
-	reg [7:0] tempX;
-	reg [6:0] tempY;
-	integer count = 1'b0;
+	//reg [7:0] tempX;
+	//reg [6:0] tempY;
+	//integer count = 1'b0;
 	reg [7:0] topLeft_X, topRight_X;
 	reg [6:0] topLeft_Y, bottomLeft_Y;
 	reg [3:0] blockCol, blockRow;
-	reg [7:0] blockAddr
+	reg [14:0] blockAddr;
+	reg [7:0]ballRaduis;
+	reg [7:0]boxesPerRow;
 	
 	always@(*) // 
 	begin
@@ -100,8 +103,9 @@ module brickCollisionLogic
 			begin
 			
 			end
-			*/
+			
 		end
 	end
 
 endmodule
+*/
