@@ -28,6 +28,8 @@ module gameLogic
 	parameter paddleObj = 2'b01;
 	parameter blockObj = 2'b10;
 	parameter noObj = 2'b11;
+	parameter numRows = 2;
+	parameter paddleSpeedZone = 5;
 	
 //------------Input Ports--------------
 	input clk;
@@ -67,6 +69,8 @@ module gameLogic
 	reg [3:0] blockCol, blockRow;
 	reg [14:0] blockAddr;
 	reg collision = 1'b0;
+	
+	reg [boxesPerRow*numRows-1:0] brickLayout = 'b11111111111111111111;
 	
 	/* Send proper values to mux */
 	always @ (*) begin
@@ -110,19 +114,32 @@ module gameLogic
 				object = ballObj;
 				//count = 0;
 				count = count + 1;
-				if((newPosX) >= (159-4)) //collide with right wall
+				if((newPosX) >= (maxX - (2*ball_Radius + V_x - 2))) //collide with right wall
 					RIGHT <= 1'b0;
-				if((newPosX) <= 1) //collide with left wall
+				if((newPosX) <= V_x+1) //collide with left wall
 					RIGHT <= 1'b1;
 					
-				if((newPosY) >= (paddleY-1-(2*ball_Radius))) begin //collide with paddle
-					if ( ((newPosX + ball_Radius) > paddleX) && ((newPosX + ball_Radius) < (paddleX + paddleLength)) ) 
+				if((newPosY) == (paddleY-1-(2*ball_Radius))) begin //collide with paddle
+					if ( (newPosX >= paddleX + paddleSpeedZone) && ((newPosX + 2*ball_Radius) < (paddleX + paddleLength-paddleSpeedZone))) 
 					begin //touches paddle
 						DOWN <= 1'b0;
+						V_x <= 8'd1;
+					end
+					else if((newPosX + 2*ball_Radius) >= paddleX-1 && newPosX < (paddleX + paddleSpeedZone))
+					begin
+						DOWN <= 1'b0;
+						RIGHT <= 1'b0;
+						V_x <= 8'd2;
+					end
+					else if((newPosX + 2*ball_Radius) >= (paddleX + paddleLength - paddleSpeedZone) && newPosX <= (paddleX + paddleLength))
+					begin
+						DOWN <= 1'b0;
+						RIGHT <= 1'b1;
+						V_x <= 8'd2;
 					end
 				end //end collide with bottom
 				
-				if((newPosY) <= 1) //collide with top
+				if((newPosY) <= V_y+1) //collide with top
 					DOWN <= 1'b1;
 				
 				if(RIGHT) begin
@@ -198,26 +215,30 @@ module gameLogic
 					end
 					else
 						blockRow = 4'd2;
+						
+					blockAddr = (boxesPerRow * blockRow) + blockCol;
 					//#5
 					//COLLISON WITH LEFT/RIGHT
 					case(RIGHT)
 						1'b1: begin
 									//COMPARE RIGHT BLOCK
-									if(topRight_X == (16*(blockCol+1)-1)  && ~(blockCol == 4'd9)) // It is hitting the left edge of the next block
+									if(topRight_X == (16*(blockCol+1)-1)  && ~(blockCol == 4'd9) && brickLayout[blockAddr+1] == 1'b1) // It is hitting the left edge of the next block
 									begin
 										//collision = 1'b1;
 										RIGHT = 1'b0;
 										blockCol = blockCol+1;
+										brickLayout[blockAddr+1] = 1'b0;
 										//blockAddr = (boxesPerRow * blockRow) + blockCol;
 										startPlot <= 1'b1;
 									end
 								end
 						1'b0: begin
-									if(topLeft_X == 16*(blockCol) && ~(blockCol == 4'd0)) // It is hitting the right edge of the next block
+									if(topLeft_X == 16*(blockCol) && ~(blockCol == 4'd0) && brickLayout[blockAddr-1] == 1'b1) // It is hitting the right edge of the next block
 									begin
 										//collision = 1'b1;
 										RIGHT = 1'b1;
 										blockCol = blockCol-1;
+										brickLayout[blockAddr-1] = 1'b0;
 										startPlot <= 1'b1;
 									end
 								end
@@ -226,20 +247,22 @@ module gameLogic
 					//COLLISON WITH UP/DOWN
 					case(DOWN)
 						1'b1: begin
-									 if(bottomLeft_Y == (10*(blockRow+1)-1) && ~(blockRow == 4'd2)) // It is hitting the top edge of the next block
+									 if(bottomLeft_Y == (10*(blockRow+1)-1) && ~(blockRow == 4'd2) && brickLayout[blockAddr+boxesPerRow] == 1'b1) // It is hitting the top edge of the next block
 									 begin
 										 //collision = 1'b1;
 										 DOWN = 1'b0;
 										 blockRow = blockRow+1;
+										 brickLayout[blockAddr+boxesPerRow] = 1'b0;
 										 startPlot <= 1'b1;
 									 end
 								 end
 						1'b0: begin
-									 if(topLeft_Y == 10*(blockRow) && ~(blockRow == 4'd0)) // It is hitting the bottom edge of the next block
+									 if(topLeft_Y == 10*(blockRow) && ~(blockRow == 4'd0) && brickLayout[blockAddr-boxesPerRow] == 1'b1) // It is hitting the bottom edge of the next block
 									 begin
 										 //collision = 1'b1;
 										 DOWN = 1'b1;
 										 blockRow = blockRow-1;
+										 brickLayout[blockAddr-boxesPerRow] = 1'b0;
 										 startPlot <= 1'b1;
 									 end
 								end
