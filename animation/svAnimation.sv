@@ -12,7 +12,8 @@ module animation
 		VGA_R,   						//	VGA Red[9:0]
 		VGA_G,	 						//	VGA Green[9:0]
 		VGA_B,   						//	VGA Blue[9:0]
-		LEDR
+		LEDR,
+		SW
 	);
 
 	input			CLOCK_50;				//	50 MHz
@@ -26,6 +27,7 @@ module animation
 	output	[9:0]	VGA_G;	 				//	VGA Green[9:0]
 	output	[9:0]	VGA_B;   				//	VGA Blue[9:0]
 	output [17:0]LEDR;
+	input [17:0] SW;
 	
 	wire resetn;
 	assign resetn = KEY[0];
@@ -49,7 +51,7 @@ module animation
 	
 	wire [7:0] sizeX;
 	wire [6:0] sizeY;
-	wire objCode;
+	wire [1:0]objCode;
 	
 	fsm_draw_logic FSM(
 			// INPUTS
@@ -85,7 +87,11 @@ module animation
 		.sizeX(sizeX),
 		.sizeY(sizeY),
 		.startPlot(startPlot),
-		.object(objCode)
+		.object(objCode),
+		.userStart(SW[0]),
+		.userReset(SW[1]),
+		.gameOver(SW[2]),
+		.LED(LEDR)
 	);
 	
 	draw_mux colorMux(
@@ -112,7 +118,7 @@ module animation
 		.clock(CLOCK_50),
 		.q(drawPaddle));
 	
-	assign LEDR[3:2] = objCode;
+	//assign LEDR[3:2] = objCode;
 	//assign LEDR[15:8] = Q_Y[7:0];
 
 	// Create an Instance of a VGA controller - there can be only one!
@@ -187,8 +193,8 @@ module draw_mux
 		case(objCode)
 			2'b00: drawColor = drawBall; // BALL
 			2'b01: drawColor = drawPaddle; // PADDLE
-			2'b10: drawColor = 3'b100; // BRICK
-			2'b11: drawColor = 3'b100; // DRAW NOTHING
+			2'b10: drawColor = 3'b100; // BLOCK
+			2'b11: drawColor = 3'b000; // DRAW NOTHING -- ERASE BLOCK
 		endcase
 	end
 	
