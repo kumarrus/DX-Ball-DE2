@@ -13,7 +13,8 @@ module animation
 		VGA_G,	 						//	VGA Green[9:0]
 		VGA_B,   						//	VGA Blue[9:0]
 		LEDR,
-		SW
+		SW,
+		GPIO_0
 	);
 
 	input			CLOCK_50;				//	50 MHz
@@ -28,6 +29,7 @@ module animation
 	output	[9:0]	VGA_B;   				//	VGA Blue[9:0]
 	output [17:0]LEDR;
 	input [17:0] SW;
+	input [1:0] GPIO_0;
 	
 	wire resetn;
 	assign resetn = KEY[0];
@@ -77,8 +79,8 @@ module animation
 
 	gameLogic dxBall
 	(
-		.moveLeft(~KEY[3]),
-		.moveRight(~KEY[2]),
+		.moveLeft(GPIO_0[1]),
+		.moveRight(GPIO_0[0]),
 		.clk(CLOCK_50),
 		.newX(new_posX),
 		.newY(new_posY),
@@ -147,32 +149,6 @@ module animation
 			
 	// Put your code here. Your code should produce signals x,y,color and writeEn
 	// for the VGA controller, in addition to any other functionality your design may require.
-
-	wire enable,
-			collision,
-				DOWN,RIGHT;
-	wire [7:0]posX, 
-					brickLength = 8'b00001010;
-						//bricks_x[1:0] = {8'b11110000,8'b11001100};
-	wire [6:0]posY, 
-					brickHeight = 7'b0000101; 
-						//bricks_y[1:0] = {7'b0110110, 7'b0101101};
-
-/*brickCollisionLogic bcl
-	(
-		// INPUT
-		~KEY[1],
-		new_posX,
-		new_posY,
-		{8'b11110000,8'b11001100},
-		{7'b0110110, 7'b0101101},
-		brickLength,
-		brickHeight,
-		//OUTPUT
-		collision,
-		DOWN,
-		RIGHT
-	);*/
 	
 endmodule
 
