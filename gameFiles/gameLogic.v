@@ -1,0 +1,552 @@
+module gameLogic
+        (
+                moveLeft,
+                moveRight,
+                clk,
+                newX,
+                newY,
+                oldX,
+                oldY,
+                sizeX,
+                sizeY,
+                startPlot,
+                object,
+					 userStart,
+					 userReset,
+					 gameOver,
+					 LED
+        );
+        
+        integer ballCyclesToUpdate = 750000;
+        integer paddleCyclesToUpdate = 2250000;
+        integer brickCyclesToUpdate = 1500000;
+        parameter ball_Radius = 2;
+        parameter boxesPerRow = 10;
+        parameter maxX = 159;
+        parameter maxY = 119;
+        parameter paddleLength = 20;
+        parameter paddleHeight = 1;
+        parameter boxLength = 16;
+        parameter boxHeight = 8;
+			  parameter ballObj = 3'b000;
+			  parameter paddleObj = 3'b001;
+			  parameter blockObj = 3'b010;
+			  parameter noObj = 3'b011;
+			  parameter startImgObj = 3'b100;
+			  parameter gameOverObj = 3'b101;
+		  parameter numRows = 2;
+		  parameter paddleSpeedZone = 4;
+		  
+		  //Game state parameters
+			parameter 		
+							STATE_INITIALIZE = 4'b0000,
+							STATE_RESET = 4'b0010,
+							STATE_DRAWBLOCKS = 4'b0011,
+							STATE_DRAWBALL = 4'b0100,
+							STATE_DRAWPADDLE = 4'b0101,
+							STATE_IDLE = 4'b0110,
+							STATE_START = 4'b0111,
+							STATE_WAITRESTART = 4'b1000,
+							STATE_DELETESTARTIMG = 4'b1001,
+							STATE_DRAWSTARTIMG = 4'b1010;
+					  
+//------------Input Ports--------------
+        input clk;
+        input moveLeft;
+        input moveRight;
+		  input userStart;
+		  input gameOver;
+		  input userReset;
+//----------Output Ports--------------
+        
+        output reg [7:0] newX = 'b0;
+        output reg [6:0] newY = 'b0;
+        output reg [7:0] oldX = 'b0;
+        output reg [6:0] oldY = 'b0;
+        output reg [7:0] sizeX = 'b0;
+        output reg [6:0] sizeY = 'b0;
+        output reg [2:0] object = 'b11;
+        
+        output reg startPlot;
+		  output [17:14]LED;
+		  assign LED = state;
+//------------Internal Variables--------
+        integer count = 0;
+		  integer ballspeed = 0;
+        reg [7:0] V_x = 8'b1; // Velocity x
+        reg [6:0] V_y = 7'b1; // Velocity y
+        reg RIGHT = 1'b1;
+        reg DOWN = 1'b0;
+        reg [7:0] newPosX = 8'b00110011; // Start x coordinate
+        reg [6:0] newPosY = 7'b1110101; // Start y coordinate
+        reg [7:0] oldPosX = 8'b00110011;
+        reg [6:0] oldPosY = 7'b1110101;
+        reg [7:0] oldPaddleX = 7'b1110101;
+        reg [7:0] paddleX = 'd100;
+        reg [6:0] paddleY = 7'b1110101; // paddle Y location : 117
+        reg [7:0]topLeft_X, topRight_X;
+        reg [6:0]topLeft_Y, bottomLeft_Y;
+        reg [3:0] blockCol, blockRow;
+        reg [14:0] blockAddr;
+		  reg [3:0] state;
+		  reg collision = 1'b0;
+		  reg [2:0] level = 3'b000;
+        reg [10:0] score = 'd0;
+	//reg [boxesPerRow*numRows-1:0] brickLayout = 'b11111111111111111111;  //The states of the block
+        reg [7:0] bricksInLevel;
+		  
+		  reg [boxesPerRow*numRows-1:0] brickLayout = 'b11111111111111111111;  //The states of the block
+		
+				
+always @ (posedge clk) begin
+	case (state)
+	
+	//----------INITIALIZE LIST WHEN RESET ----------
+		STATE_INITIALIZE : begin
+			newPosX = 8'b01010011;// + count[3:0] * count[4];
+			newPosY = 7'b1110000;// - count [3:0] * count[2];
+			oldPosX = 8'b01010011;// + count[3:0] * count[4];
+			oldPosY = 7'b1110000;// - count [3:0] * count[2];
+			oldPaddleX = 'd69;
+			paddleX = 'd69;
+			paddleY = 7'b1110101;
+			if (level == 'd0)
+				brickLayout = 'b110011001111111111111111111111;
+			else if (level == 'd1)
+				brickLayout = 'b101010101010101010100101010101;
+			else if (level == 'd2)
+				brickLayout = 'b111011100111101110100101110111;
+			RIGHT = 1'b1;
+			DOWN = 1'b0;
+			count <= 0;
+			state <= STATE_RESET;		
+		end //end state_initialize
+
+
+	//----------RESET SCREEN (COVER ALL WITH BLACK)
+		STATE_RESET : begin
+			if (count == 0) begin
+				count <= count + 1;
+				//draw black screen
+				newX = 0;
+				newY = 0;
+				oldX = 0;
+				oldY = 0;
+				sizeX = maxX + 1;
+				sizeY = maxY + 1;
+				object = noObj;
+				startPlot <= 1;
+			//delay 50,000 cycles for black screen to draw
+			end else if (count == 'd50000) begin
+				newX = 0;
+				newY = 0;
+				oldX = 0;
+				oldY = 0;
+				sizeX = 1;
+				sizeY = 1;
+				object = noObj;
+				startPlot <= 1;
+				count <= count + 1;
+			//Wait another 50,000 cycles to display start screen
+			end else if (count == 'd100000) begin
+				state <= STATE_DRAWBLOCKS;
+				count <= 0;
+				blockCol <= 0;
+				blockRow <= 0;
+			end else begin
+				count <= count + 1'b1;
+				startPlot <= 0;
+			end
+		end//end state_reset
+
+		
+	//----------DRAW ALL BOXES ON THE SCREEN ----- (0 = INACTIVE, 1 = ACTIVE (DRAW))
+		STATE_DRAWBLOCKS : begin
+			if (count == 0) begin //Every 1000 cycles - draw next box
+				count <= count + 1;
+				newX = boxLength * (blockCol);
+				newY = boxHeight * (blockRow);
+				oldX = boxLength * (blockCol);
+				oldY = boxHeight * (blockRow);
+				sizeX = boxLength;
+				sizeY = boxHeight;
+				if (brickLayout[blockCol + (blockRow * boxesPerRow)] == 1'b1)
+					object = blockObj;
+				else
+					object = noObj;
+				startPlot <= 1;
+			end else if (count == 'd1000) begin //Move to next block
+				if (blockCol == boxesPerRow - 1) begin
+					blockCol = 0;
+					if (blockRow >= numRows)
+						state <= STATE_DRAWBALL;
+					else
+						blockRow = blockRow + 1;
+				end
+				else
+					blockCol = blockCol + 1;
+				count <= 0;
+			end else begin //Wait for drawing to complete
+				count <= count + 1;
+				startPlot <= 0;
+			end
+		end //end state_drawblocks
+		
+	//------DRAW INITIAL BALL POSITION---------
+		STATE_DRAWBALL : begin
+			if (count == 0) begin //Draw ball
+				 object = ballObj;
+				 newX = newPosX;
+				 newY = newPosY;
+				 oldX = oldPosX;
+				 oldY = oldPosY;
+				 sizeX = 2 * ball_Radius;
+				 sizeY = 2 * ball_Radius;
+				 startPlot <= 1;
+				count <= count + 1;
+			end else if (count == 'd100) begin //@ 100 cycles, done
+				count <= 0;
+				state <= STATE_DRAWPADDLE;
+			end else begin //wait for 100 cycles to draw ball
+				count <= count + 1;
+				startPlot <= 0;
+			end	
+		end //end state_drawball
+		
+	//-----DRAW INITIAL PADDLE POSITION ON SCREEN------
+		STATE_DRAWPADDLE : begin
+			if (count == 0) begin //Send info on paddle to draw
+				 newX = paddleX;
+				 newY = paddleY;
+				 oldX = oldPaddleX;
+				 oldY = paddleY;
+				 sizeX = paddleLength;
+				 sizeY = paddleHeight;
+				 object = paddleObj;
+				 startPlot <= 1;
+				 count <= count + 1;
+				 //LED = state;
+			end else if (count == 'd200) begin //After 200 cycles, done
+				state <= STATE_DRAWSTARTIMG;
+				count <= 0;
+			end else begin//Wait 200 cycles to draw paddle
+				count <= count + 1;
+				startPlot <= 0;
+				end
+		end
+		
+	//-----STATE DRAW START IMAGE
+		STATE_DRAWSTARTIMG : begin
+			if (count == 0) begin
+				 newX = 9;
+				 newY = 40;
+				 oldX = 9;
+				 oldY = 40;
+				 sizeX = 140;
+				 sizeY = 70;
+				 object = startImgObj;
+				 startPlot <= 1;
+				 count <= count + 1;		
+			end else if (count == 'd50000) begin
+				state <= STATE_IDLE;
+			end else begin
+				count <= count + 1;
+				startPlot <= 0;
+			end
+		end
+		
+	//------STATE BEFORE PLAYING (USER MUST PRESS PLAY)
+		STATE_IDLE: begin 
+			if (userStart) begin //Wait until user presses 'start'
+				state <= STATE_DELETESTARTIMG;
+				count <= 0;
+			end
+		end
+	//------STATE DELETE START IMAGE
+		STATE_DELETESTARTIMG :  begin
+			if (count == 0) begin
+				 newX = 9;
+				 newY = 40;
+				 oldX = 9;
+				 oldY = 40;
+				 sizeX = 140;
+				 sizeY = 70;
+				 object = noObj;
+				 startPlot <= 1;
+				 count <= count + 1;			
+			end else if (count == 'd50000) begin
+				count <= 0;
+				state <= STATE_START;
+			end else begin
+				count <= count + 1;
+				startPlot <= 0;
+			end
+		end
+	
+	
+	//------GAME HAS STARTED------
+		STATE_START: begin
+			
+			//If the ball drops below screen, user resets, or all blocks gone, reset
+			if (newPosY > maxY || (brickLayout == 'd0)) begin 
+				state <= STATE_WAITRESTART;
+				count <= 0;
+			end else if (userStart) begin
+				//----- UPDATE BALL
+				if(count == ballCyclesToUpdate) begin
+						object = ballObj;
+						//count = 0;
+						count = count + 1;
+						ballspeed <= ballspeed + 1;
+						//Collide with right wall
+						if((newPosX) >= (maxX - (2*ball_Radius + V_x - 1)-1))
+							RIGHT <= 1'b0;
+							
+						//collide with left wall
+						if((newPosX) <= V_x)
+							RIGHT <= 1'b1;
+							
+						//collide with paddle	
+						if((newPosY) == (paddleY-1-(2*ball_Radius))) begin 
+							if ( (newPosX >= paddleX + paddleSpeedZone) && ((newPosX + 2*ball_Radius) < (paddleX + paddleLength-paddleSpeedZone))) 
+							begin
+								DOWN <= 1'b0;
+								V_x = 8'd1;
+							end
+							else if((newPosX + 2*ball_Radius) >= paddleX-1 && newPosX < (paddleX + paddleSpeedZone))
+							begin
+								DOWN <= 1'b0;
+								RIGHT <= 1'b0;
+								V_x = 8'd1;
+							end
+							else if((newPosX + 2*ball_Radius) >= (paddleX + paddleLength - paddleSpeedZone) && newPosX <= (paddleX + paddleLength))
+							begin
+								DOWN <= 1'b0;
+								RIGHT <= 1'b1;
+								V_x = 8'd1;
+							end
+						end //end collide with paddle
+						
+						//collide with top screen
+						if((newPosY) <= V_y+1)
+							DOWN <= 1'b1;
+						
+						//Update so that the ball will move right/left or down/up
+						if(RIGHT) begin
+							oldPosX <= newPosX;
+							newPosX <= newPosX + V_x;				
+						end else begin
+							oldPosX <= newPosX;
+							newPosX <= newPosX - V_x;
+						end if(DOWN) begin
+							oldPosY <= newPosY;
+							newPosY <= newPosY + V_y;
+						end else begin
+							oldPosY <= newPosY;
+							newPosY <= newPosY - V_y;
+						end
+						
+						if(ballspeed == 1000 && ballCyclesToUpdate > 350000) begin
+							ballCyclesToUpdate <= ballCyclesToUpdate - 1;
+							paddleCyclesToUpdate <= paddleCyclesToUpdate -1;
+							brickCyclesToUpdate <= brickCyclesToUpdate - 1;
+							ballspeed <= 0;
+						end
+						startPlot <= 1'b1;
+				end //end updateBall
+				
+				//-----UPDATE PADDLE
+				else if (count == paddleCyclesToUpdate)
+					begin
+					  count = 0;
+					  object = paddleObj;
+					  
+					  //The paddle will move based on user input
+					  if (moveLeft) begin
+						 if (!(paddleX < V_x)) begin
+									oldPaddleX <= paddleX;
+									paddleX <= paddleX - V_x;
+									startPlot <= 1'b1;
+						 end
+					  end else if (moveRight) begin 
+						 if ((maxX >= (paddleX + paddleLength) ) ) begin
+									oldPaddleX <= paddleX;
+									paddleX <= paddleX + V_x;
+									startPlot <= 1'b1;
+						 end
+					  end
+					  //startPlot <= 1'b1;		  
+					end //end if update paddle
+				
+				//------UPDATE BRICKS
+				else if (count == brickCyclesToUpdate)
+				begin
+					count = count + 1;
+					object = noObj;
+					//Test Logic - stage 2
+					topLeft_X = newPosX;
+					topRight_X = newPosX + (2*ball_Radius) - 1;
+					topLeft_Y = newPosY;
+					bottomLeft_Y = newPosY + (2*ball_Radius) - 1;
+					
+					//If ball is in area in which collision is possible
+					if((newPosY >= 7'd0 && newPosY <= boxHeight * numRows)) 
+						begin
+					
+							blockCol = newPosX[7:4];
+							collision = 1'b0;
+							//if(newPosY < 7'd10)
+								//begin
+									//blockRow = 4'd0;
+								//end
+							//else if(newPosY >= 7'd10 && newPosY < 7'd20)
+								//begin
+									//blockRow = 4'd1;
+								//end
+							//if(newPosY < boxHeight * numRows)
+								//blockRow = newPosY / 10;
+							//while()
+							//else
+								blockRow = newPosY / boxHeight;
+								
+							blockAddr = (boxesPerRow * blockRow) + blockCol;
+							if(brickLayout[blockAddr] == 1'b0) begin
+							//#5
+							//COLLISON WITH LEFT/RIGHT
+							case(RIGHT)
+								1'b1: begin
+									//COMPARE RIGHT BLOCK
+									// It is hitting the left edge of the next block
+									if(topRight_X == (boxLength*(blockCol+1)-1)  && ~(blockCol == boxesPerRow-1) && brickLayout[blockAddr+1] == 1'b1) 
+									begin
+										RIGHT = 1'b0;
+										blockCol = blockCol+1;
+										brickLayout[blockAddr+1] = 1'b0;
+										startPlot <= 1'b1;
+										score <= score + 1;
+										collision = 1'b1;
+									end
+								end //end case 1'b1
+								1'b0: begin
+									// It is hitting the right edge of the next block
+									if(topLeft_X == boxLength*(blockCol) && ~(blockCol == 4'd0) && brickLayout[blockAddr-1] == 1'b1) 
+									begin
+										RIGHT = 1'b1;
+										blockCol = blockCol-1;
+										brickLayout[blockAddr-1] = 1'b0;
+										startPlot <= 1'b1;
+										score <= score + 1;
+										collision = 1'b1;
+									end
+								end //end case 1'b0
+							endcase //end case (RIGHT)
+							
+							//#10
+							//COLLISON WITH UP/DOWN
+							if(collision == 1'b0) begin
+							case(DOWN)
+								1'b1: 
+									begin
+										 // It is hitting the top edge of the bottom block
+										 if(bottomLeft_Y == (boxHeight*(blockRow+1)-1) && ~(blockRow == numRows) && brickLayout[blockAddr+boxesPerRow] == 1'b1)
+										 begin
+											 DOWN = 1'b0;
+											 blockRow = blockRow+1;
+											 brickLayout[blockAddr+boxesPerRow] = 1'b0;
+											 startPlot <= 1'b1;
+											 score <= score + 1;
+										 end
+									end //end case 1'b1
+								1'b0: 
+									begin
+										 // It is hitting the bottom edge of the top block
+										 if(topLeft_Y == boxHeight*(blockRow) && ~(blockRow == 4'd0) && brickLayout[blockAddr-boxesPerRow] == 1'b1)
+										 begin
+											 DOWN = 1'b1;
+											 blockRow = blockRow-1;
+											 brickLayout[blockAddr-boxesPerRow] = 1'b0;
+											 startPlot <= 1'b1;
+											 score <= score + 1;
+										 end
+									end //end case 1'b0
+							endcase //end case(DOWN)
+							end
+							end
+							else begin
+								brickLayout[blockAddr] = 1'b0;
+								startPlot <= 1'b1;
+								score <= score + 1;
+							end
+					end //end newPosY >= 7'd0 && newPosY <= 7'd20)
+				end //end update bricks
+			
+			else 	
+				//DON'T UPDATE ANYTHING
+				begin
+					startPlot <= 1'b0;
+					count = count + 1;
+				end //end don't update anything		
+			
+			
+			
+				//SEND INFORMATION OF THE OBJECT WE NEED TO DRAW
+				if (object == ballObj) begin
+					 newX = newPosX;
+					 newY = newPosY;
+					 oldX = oldPosX;
+					 oldY = oldPosY;
+					 sizeX = 2 * ball_Radius;
+					 sizeY = 2 * ball_Radius;
+				end else if (object == paddleObj) begin
+					 newX = paddleX;
+					 newY = paddleY;
+					 oldX = oldPaddleX;
+					 oldY = paddleY;
+					 sizeX = paddleLength;
+					 sizeY = paddleHeight;
+				end else if (object == noObj) begin		
+					newX = boxLength * (blockCol);
+					newY = boxHeight * (blockRow);
+					oldX = boxLength * (blockCol);
+					oldY = boxHeight * (blockRow);
+					sizeX = boxLength;
+					sizeY = boxHeight;
+				end
+				//END DRAWING INFORMATION
+							
+		end //END IF (GAME DOES NOT NEED TO RESET)
+	
+		end //END STATE - GAMEPLAY
+		
+		STATE_WAITRESTART : begin
+			if (count == 0) begin
+				 newX = 9;
+				 newY = 40;
+				 oldX = 9;
+				 oldY = 40;
+				 sizeX = 140;
+				 sizeY = 70;
+				 object = gameOverObj;
+				 startPlot <= 1;
+				 count <= count + 1;
+			end else if (count > 'd50000) begin
+				if(gameOver) begin
+					if(brickLayout != 'd0)
+						score <= 0;
+					level <= level + 1;
+					state <= STATE_INITIALIZE;
+				end
+				else if (userReset)
+					state <= STATE_INITIALIZE;
+			end else begin
+				count <= count + 1;
+				startPlot <= 0;	
+			end
+				
+		end
+		
+	endcase //end case for gameState
+	
+end //end always @ posedge clk
+
+endmodule

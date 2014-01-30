@@ -1,0 +1,14 @@
+Analysis & Synthesis Status : Successful - Sun Dec 01 19:02:53 2013
+Quartus II 32-bit Version : 11.1 Build 259 01/25/2012 SP 2 SJ Web Edition
+Revision Name : animation
+Top-level Entity Name : animation
+Family : Cyclone II
+Total logic elements : 1,803
+    Total combinational functions : 1,797
+    Dedicated logic registers : 262
+Total registers : 262
+Total pins : 93
+Total virtual pins : 0
+Total memory bits : 157,248
+Embedded Multiplier 9-bit elements : 1
+Total PLLs : 1

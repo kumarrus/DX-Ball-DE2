@@ -1,0 +1,103 @@
+<?xml version="1.0"?>
+<!--Created by Liquid XML 2008 (www.liquid-technologies.com) for Altera-->
+<ProgramExecution xmlns:xs="http://www.w3.org/2001/XMLSchema-instance">
+	<QuartusExecution>
+		<AddressBits>32</AddressBits>
+		<ApplicationError>
+		<Bits>32</Bits>
+		<CommandLine>quartus</CommandLine>
+		<ErrorMessage>m_undo_vec.size() &gt;= MINIMUM_SIZE_FOR_BACK</ErrorMessage>
+		<Line>790</Line>
+		<Platform>windows</Platform>
+		<SourceFile>/quartus/rtlv/rsmq/rsmq_view.cpp</SourceFile>
+		<StackTrace>
+	  0xd7b8697: rtlv_rsmq + 0x18697 (?process_back_command@RSMQ_VIEW@@IAEPAVRSMQ_WORKSPACE@@XZ + 0x37)
+	  0xd7c1b3e: rtlv_rsmq + 0x21b3e (?on_back_action@RSMQ_VIEW@@IAEXXZ + 0x7e)
+	  0xd7c2a8f: rtlv_rsmq + 0x22a8f (?qt_metacall@RSMQ_VIEW@@UAEHW4Call@QMetaObject@@HPAPAX@Z + 0x6f)
+	 0x670e0eae: QtCore4 + 0xe0eae (?metacall@QMetaObject@@SAHPAVQObject@@W4Call@1@HPAPAX@Z + 0x3e)
+	 0x6500c57d: QtGui4 + 0xc57d (?activate@QAction@@QAEXW4ActionEvent@1@@Z + 0xcd)
+	 0x6537ddaa: QtGui4 + 0x37ddaa (?nextCheckState@QToolButton@@MAEXXZ + 0x1a)
+	 0x652e1bc8: QtGui4 + 0x2e1bc8 (?setId@QButtonGroup@@QAEXPAVQAbstractButton@@H@Z + 0xa78)
+		</StackTrace>
+		<Subsystem>RSMQ</Subsystem>
+	</ApplicationError>
+	<Compilation>
+			<CompileID>0</CompileID>
+			<DeviceFamily/>
+			<IncrementalCompilation/>
+			<TopLevelEntityName/>
+		</Compilation>
+		<DateInvoked>2013/12/01 17:18:20</DateInvoked>
+		<ElapsedTime>19208</ElapsedTime>
+		<IP>192.168.2.14,192.168.168.1,192.168.216.1</IP>
+		<IsInternal>false</IsInternal>
+		<IsQt>true</IsQt>
+		<License>
+			<Edition>Web Edition</Edition>
+			<LicenseHostID/>
+		</License>
+		<Machine>
+			<CPUCountLogical>2</CPUCountLogical>
+			<CPUCountPhysical>1</CPUCountPhysical>
+			<CPUSpeed>2195</CPUSpeed>
+			<Hostname>Acer</Hostname>
+			<NIC>
+				<Address>5217c4dd12cd</Address>
+			</NIC>
+			<NIC>
+				<Address>1217c4dd12cd</Address>
+			</NIC>
+			<NIC>
+				<Address>28c68ef44e16</Address>
+			</NIC>
+			<NIC>
+				<Address>0017c4dd12cd</Address>
+			</NIC>
+			<NIC>
+				<Address>00235a73cfcd</Address>
+			</NIC>
+			<NIC>
+				<Address>005056c00001</Address>
+			</NIC>
+			<NIC>
+				<Address>005056c00008</Address>
+			</NIC>
+			<OS>Windows 7</OS>
+			<OSAddressBits>32</OSAddressBits>
+			<OSVersion>6.2</OSVersion>
+			<Platform>windows</Platform>
+			<ScreenResolution>unknown</ScreenResolution>
+			<TotalPhysicalRAM>3001</TotalPhysicalRAM>
+			<TotalVirtualRAM>1094</TotalVirtualRAM>
+		</Machine>
+		<Name>quartus</Name>
+		<PeakMemoryUsed>0</PeakMemoryUsed>
+		<ProjectRevision>
+			<ProjectName/>
+			<Revision/>
+		</ProjectRevision>
+		<QuartusInstallation>
+			<InstallationID>44833267011094.138000523805152</InstallationID>
+			<Version>
+				<Build>259</Build>
+				<BuildSite>SJ</BuildSite>
+				<BuildSuffix/>
+				<Edition>Web Edition</Edition>
+				<ServicePack>2</ServicePack>
+				<VersionNumber>11.1</VersionNumber>
+			</Version>
+		</QuartusInstallation>
+		<QuartusUser>
+			<AlteraUserName/>
+			<FAEContactName/>
+			<TalkbackStatus>
+				<DateSet/>
+				<TalkbackOn>true</TalkbackOn>
+			</TalkbackStatus>
+			<UserID>44833267011094.138021891205632</UserID>
+			<UserName>Admin</UserName>
+		</QuartusUser>
+	</QuartusExecution>
+	<SchemaVersion>schema_2011-08-26</SchemaVersion>
+</ProgramExecution>
+

@@ -1,0 +1,101 @@
+------------------------------------------------------------
+TimeQuest Timing Analyzer Summary
+------------------------------------------------------------
+
+Type  : Slow Model Setup 'gameLogic:dxBall|object[1]'
+Slack : -6.105
+TNS   : -17.574
+
+Type  : Slow Model Setup 'CLOCK_50'
+Slack : -5.089
+TNS   : -883.743
+
+Type  : Slow Model Setup 'SW[16]'
+Slack : -0.165
+TNS   : -0.266
+
+Type  : Slow Model Setup 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 32.981
+TNS   : 0.000
+
+Type  : Slow Model Hold 'gameLogic:dxBall|object[1]'
+Slack : -2.955
+TNS   : -7.099
+
+Type  : Slow Model Hold 'CLOCK_50'
+Slack : -2.554
+TNS   : -12.978
+
+Type  : Slow Model Hold 'SW[16]'
+Slack : -0.249
+TNS   : -0.661
+
+Type  : Slow Model Hold 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 0.518
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'SW[16]'
+Slack : -1.222
+TNS   : -1.222
+
+Type  : Slow Model Minimum Pulse Width 'gameLogic:dxBall|object[1]'
+Slack : 0.500
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'CLOCK_50'
+Slack : 7.620
+TNS   : 0.000
+
+Type  : Slow Model Minimum Pulse Width 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 17.873
+TNS   : 0.000
+
+Type  : Fast Model Setup 'gameLogic:dxBall|object[1]'
+Slack : -3.125
+TNS   : -9.064
+
+Type  : Fast Model Setup 'CLOCK_50'
+Slack : -1.839
+TNS   : -302.361
+
+Type  : Fast Model Setup 'SW[16]'
+Slack : 0.426
+TNS   : 0.000
+
+Type  : Fast Model Setup 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 36.828
+TNS   : 0.000
+
+Type  : Fast Model Hold 'gameLogic:dxBall|object[1]'
+Slack : -1.680
+TNS   : -4.207
+
+Type  : Fast Model Hold 'CLOCK_50'
+Slack : -1.595
+TNS   : -24.050
+
+Type  : Fast Model Hold 'SW[16]'
+Slack : -0.300
+TNS   : -0.874
+
+Type  : Fast Model Hold 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 0.238
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'SW[16]'
+Slack : -1.222
+TNS   : -1.222
+
+Type  : Fast Model Minimum Pulse Width 'gameLogic:dxBall|object[1]'
+Slack : 0.500
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'CLOCK_50'
+Slack : 7.620
+TNS   : 0.000
+
+Type  : Fast Model Minimum Pulse Width 'VGA|mypll|altpll_component|pll|clk[0]'
+Slack : 17.873
+TNS   : 0.000
+
+------------------------------------------------------------

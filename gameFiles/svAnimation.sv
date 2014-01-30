@@ -14,12 +14,7 @@ module animation
 		VGA_B,   						//	VGA Blue[9:0]
 		LEDR,
 		SW,
-		GPIO_0,
-		HEX0,
-		HEX1
-		//PS2_CLK,
-		//PS2_DAT
-		
+		GPIO_0
 	);
 
 	input			CLOCK_50;				//	50 MHz
@@ -34,10 +29,7 @@ module animation
 	output	[9:0]	VGA_B;   				//	VGA Blue[9:0]
 	output [17:0]LEDR;
 	input [17:0] SW;
-	input [2:0] GPIO_0;
-	output [6:0] HEX0, HEX1;
-	//input PS2_CLK;
-	//input PS2_DAT;
+	input [1:0] GPIO_0;
 	
 	wire resetn;
 	assign resetn = KEY[0];
@@ -45,7 +37,7 @@ module animation
 	// Create the color, x, y and writeEn wires that are inputs to the controller.
 	wire writeEn; // PLOT AND BLANK
 	wire startPlot;// = ~KEY[1]
-	wire [14:0] address; // Address in ROM/RAM
+	wire [7:0] address; // Address in ROM/RAM
 	wire [2:0] color, 
 				  drawColor, 
 				  eraseColor,
@@ -65,32 +57,6 @@ module animation
 	wire [7:0] sizeX;
 	wire [6:0] sizeY;
 	wire [2:0]objCode;
-	wire [10:0] GameScore;
-	wire left, right, start;
-	
-	wire keyLeft, keyRight, keyStart;
-	
-	/*PS2_Demo keyboard(
-			.CLOCK_50(CLOCK_50),
-			.KEY(SW[15:13]),
-			.PS2_CLK(PS2_CLK),
-			.PS2_DAT(PS2_DAT),
-			.left(keyLeft),
-			.right(keyRight),
-			.start(keyStart)
-			);*/
-	
-	input_mode in(
-			.switch(SW[17:16]),
-			.GPIO(GPIO_0),
-			.KEY(KEY[3:1]),
-			.keyLeft(keyLeft),
-			.keyRight(keyRight),
-			.keyStart(keyStart),
-			.usrStart(SW[0]),
-			.left(left),
-			.right(right),
-			.start(start));
 	
 	fsm_draw_logic FSM(
 			// INPUTS
@@ -116,8 +82,8 @@ module animation
 
 	gameLogic dxBall
 	(
-		.moveLeft(left),//GPIO_1[2]~KEY[3]
-		.moveRight(right),//GPIO_1[0]~KEY[2]
+		.moveLeft(GPIO_0[1]),
+		.moveRight(GPIO_0[0]),
 		.clk(CLOCK_50),
 		.newX(new_posX),
 		.newY(new_posY),
@@ -127,11 +93,10 @@ module animation
 		.sizeY(sizeY),
 		.startPlot(startPlot),
 		.object(objCode),
-		.userStart(start),//GPIO_1[4]SW[0]
+		.userStart(SW[0]),
 		.userReset(SW[1]),
 		.gameOver(SW[2]),
-		.LED(LEDR),
-		.score(GameScore)
+		.LED(LEDR)
 	);
 	
 	draw_mux colorMux(
@@ -177,15 +142,6 @@ module animation
 		.clock(CLOCK_50),
 		.q(drawResetImg));
 	
-	
-	hex_7seg score1(
-		.hex_digit(GameScore[3:0]),
-		.seg(HEX0));
-		
-	hex_7seg score2(
-		.hex_digit(GameScore[7:4]),
-		.seg(HEX1));
-	
 	//assign LEDR[3:2] = objCode;
 	//assign LEDR[15:8] = Q_Y[7:0];
 
@@ -218,51 +174,6 @@ module animation
 	
 endmodule
 
-module input_mode
-	(
-		switch,
-		GPIO,
-		KEY,
-		keyLeft,
-		keyRight,
-		keyStart,
-		usrStart,
-		left,
-		right,
-		start
-	);
-	
-	input [1:0] switch;
-	input keyLeft, keyRight, keyStart;
-	input usrStart;
-	input [2:0] GPIO, KEY;
-	output reg left = 1'b0, 
-		right = 1'b0, 
-		start = 1'b0;
-	
-	always@(*)
-	begin
-		case(switch)
-			2'b00:	begin
-						right = GPIO[0];
-						left = GPIO[1];
-						start = GPIO[2];
-						end
-			2'b01:	begin
-						start = usrStart;
-						right = ~KEY[1];
-						left = ~KEY[2];
-						end
-			2'b10:	begin
-						start = usrStart;
-						right = keyRight;
-						left = keyLeft;
-						end
-		endcase
-	end
-	
-endmodule
-
 module draw_mux
 	(
 		objCode,
@@ -276,14 +187,14 @@ module draw_mux
 	
 	input [2:0] objCode;
 	input [2:0] drawBall,drawPaddle, drawBlock, drawStartImg, drawResetImg;
-	output reg [2:0] drawColor = 1'b0;
+	output reg [2:0] drawColor;
 	
 	always@(*)
 	begin
 		case(objCode)
 			3'b000: drawColor = drawBall; // BALL
 			3'b001: drawColor = drawPaddle; // PADDLE
-			3'b010: drawColor = drawBlock; // BLOCK
+			3'b010: drawColor = drawBlockImg; // BLOCK
 			3'b011: drawColor = 3'b000; // DRAW NOTHING -- ERASE BLOCK
 			3'b100: drawColor = drawStartImg;
 			3'b101: drawColor = drawResetImg;
@@ -325,7 +236,7 @@ module fsm_draw_logic
 	input [7:0] SIZEOF_Y;
 //----------Output Ports--------------
 	output reg writeEn;
-	output reg [14:0] address;
+	output reg [7:0] address;
 	output reg [7:0] Q_x = 8'b0;
 	output reg [6:0] Q_y = 7'b0;
 	output reg [2:0] color;

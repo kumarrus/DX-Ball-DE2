@@ -1,0 +1,21 @@
+
+State Machine - |animation|gameLogic:dxBall|state
+Name state.STATE_DRAWSTARTIMG state.STATE_DELETESTARTIMG state.STATE_WAITRESTART state.STATE_START state.STATE_IDLE state.STATE_DRAWPADDLE state.STATE_DRAWBALL state.STATE_DRAWBLOCKS state.STATE_RESET state.STATE_INITIALIZE 
+state.STATE_INITIALIZE 0 0 0 0 0 0 0 0 0 0 
+state.STATE_RESET 0 0 0 0 0 0 0 0 1 1 
+state.STATE_DRAWBLOCKS 0 0 0 0 0 0 0 1 0 1 
+state.STATE_DRAWBALL 0 0 0 0 0 0 1 0 0 1 
+state.STATE_DRAWPADDLE 0 0 0 0 0 1 0 0 0 1 
+state.STATE_IDLE 0 0 0 0 1 0 0 0 0 1 
+state.STATE_START 0 0 0 1 0 0 0 0 0 1 
+state.STATE_WAITRESTART 0 0 1 0 0 0 0 0 0 1 
+state.STATE_DELETESTARTIMG 0 1 0 0 0 0 0 0 0 1 
+state.STATE_DRAWSTARTIMG 1 0 0 0 0 0 0 0 0 1 
+
+State Machine - |animation|fsm_draw_logic:FSM|state
+Name state.HSYNC state.ERASE state.DRAW state.IDLE state.VSYNC 
+state.IDLE 0 0 0 0 0 
+state.DRAW 0 0 1 1 0 
+state.ERASE 0 1 0 1 0 
+state.HSYNC 1 0 0 1 0 
+state.VSYNC 0 0 0 1 1 

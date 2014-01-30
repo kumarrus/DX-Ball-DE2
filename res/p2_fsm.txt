@@ -1,0 +1,11 @@
+//FSM
+switch(next_state)
+begin
+	state WAITING_USER_INPUT: if(enable) goto state PLOT
+												if(reset) goto state CLEAR
+	state PLOT: start COUNTER_X and COUNTER_Y
+						if(reset) goto state CLEAR
+						if(done) goto WUI
+	state CLEAR: CLEAR screen
+						if done goto state WUI
+end
